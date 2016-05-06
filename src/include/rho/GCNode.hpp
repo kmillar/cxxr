@@ -401,7 +401,7 @@ namespace rho {
 
 	// Increment the reference count.  Overflow is handled by the
 	// stickiness of the MSB.
-	static void incRefCount(const GCNode* node)
+	static void incRefCount(const GCNode* node) noexcept
 	{
 	    if (node) {
 		unsigned char& rcmms = node->m_rcmms;

@@ -83,6 +83,8 @@ namespace rho {
 	RHandle(const RHandle<T>& pattern);
 	RHandle<T>& operator=(const RHandle<T>& source);
 
+        RHandle(RHandle<T>&& pattern) noexcept = default;
+
 	/** @brief Assignment from pointer.
 	 *
 	 * Note that this does not attempt to clone \a newtarget: it

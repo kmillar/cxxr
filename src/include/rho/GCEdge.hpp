@@ -44,7 +44,7 @@ namespace rho {
 	 */
 	void detach();
     protected:
-	GCEdgeBase()
+	GCEdgeBase() noexcept
 	    : m_target(nullptr)
 	{}
 
@@ -52,7 +52,7 @@ namespace rho {
 	 *
 	 * @param source Pattern for the copy.
 	 */
-	GCEdgeBase(const GCEdgeBase& source)
+	GCEdgeBase(const GCEdgeBase& source) noexcept
 	    : m_target(source.m_target)
 	{
 	    GCNode::incRefCount(m_target);
@@ -62,6 +62,13 @@ namespace rho {
 	{
 	    GCNode::decRefCount(m_target);
 	}
+
+	/** @brief Move constructor.
+	 */
+        GCEdgeBase(GCEdgeBase&& source) noexcept {
+            m_target = source.m_target;
+            source.m_target = nullptr;
+        }
 
 	/** @brief Get target of this edge.
 	 *
@@ -83,6 +90,13 @@ namespace rho {
 	    const GCNode* oldtarget = m_target;
 	    m_target = newtarget;
 	    GCNode::decRefCount(oldtarget);
+	}
+
+        void retarget(GCEdgeBase&& source)
+	{
+            GCNode::decRefCount(m_target);
+            m_target = source.m_target;
+            source.m_target = nullptr;
 	}
     private:
 	const GCNode* m_target;
@@ -111,7 +125,7 @@ namespace rho {
     public:
 	typedef T type;
 
-	GCEdge()
+	GCEdge() noexcept
 	{}
 
 	// explicit GCEdge(T* target) is intentionally not defined here.
@@ -131,11 +145,17 @@ namespace rho {
 	 * @param source GCEdge to be copied.  The constructed GCEdge
 	 * will point to the same object (if any) as \a source. 
 	 */
-	GCEdge(const GCEdge<T>& source)
-	    : GCEdgeBase(source)
-	{}
+        GCEdge(const GCEdge<T>& source) noexcept = default;
+
+        GCEdge(GCEdge<T>&& source) noexcept = default;
 
 	GCEdge<T>& operator=(const GCEdge<T>& source)
+	{
+	    retarget(source);
+	    return *this;
+	}
+
+	GCEdge<T>& operator=(GCEdge<T>&& source)
 	{
 	    retarget(source);
 	    return *this;
@@ -187,7 +207,7 @@ namespace rho {
 
 	template <class T>
 	struct NAFunc<GCEdge<T> > {
-	    const GCEdge<T>& operator()() const
+	    GCEdge<T> operator()() const
 	    {
 		static GCEdge<T> na;
 		return na;
