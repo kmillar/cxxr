@@ -55,9 +55,13 @@ R: Makefile gitonly
 	@test -f src/library/stamp-docs || \
 	  $(ECHO) "you should 'make docs' now ..."
 
-docs: R FORCE
-	-@(cd doc && $(MAKE) $@)
-	-@(cd src/library && $(MAKE) $@)
+docs: doc_docs library_docs
+
+doc_docs: R FORCE
+	-$(MAKE) -C doc $@
+
+library_docs: R FORCE
+	-$(MAKE) -C src/library $@
 
 doxygen: FORCE
 	doxygen $(srcdir)/doc/doxygen/doxygen.conf

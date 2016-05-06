@@ -37,9 +37,25 @@ all: Makefile R
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
-R: Makefile
+R: Makefile $(addsuffix -R, ${SUBDIRS})
 
-install install-strip TAGS info dvi dist check R docs:
+%-R:
+	+$(MAKE) -C $* R
+
+extra-R: include-R
+appl-R: include-R extra-R
+nmath-R: include-R extra-R
+unix-R: include-R extra-R
+main-R: include-R extra-R appl-R nmath-R unix-R
+modules-R: include-R extra-R
+library-R: main-R modules-R scripts-R
+
+docs: Makefile $(addsuffix -docs, ${SUBDIRS})
+
+%-docs:
+	$(MAKE) -C $* docs
+
+install install-strip TAGS info dvi dist check:
 	@for d in $(SUBDIRS); do \
 	  (cd $${d} && $(MAKE) $@) || exit 1; \
 	done
