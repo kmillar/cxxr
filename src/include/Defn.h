@@ -62,6 +62,18 @@
  */
 # define extern0 extern attribute_hidden
 
+#if defined(__cplusplus) && defined(__has_cpp_attribute)
+#  if __has_cpp_attribute(__fallthrough__)
+#    define FALLTHROUGH_INTENDED [[fallthrough]]
+#  elif __has_cpp_attribute(clang::fallthrough)
+#    define FALLTHROUGH_INTENDED [[clang::fallthrough]]
+#  endif
+#endif
+
+#ifndef FALLTHROUGH_INTENDED
+#  define FALLTHROUGH_INTENDED
+#endif
+
 #define MAXELTSIZE 8192 /* Used as a default for string buffer sizes,
 			   and occasionally as a limit. */
 
@@ -775,6 +787,8 @@ void R_InitialData(void);
 
 #ifdef __cplusplus
 }  // extern "C"
+bool Rf_asLogicalNoNA(SEXP, SEXP);
+
 std::pair<bool, SEXP> R_possible_dispatch(SEXP, SEXP, SEXP, SEXP, Rboolean);
 int Rf_DispatchOrEval(SEXP, SEXP, SEXP, SEXP, SEXP*,
 		      rho::MissingArgHandling, int);

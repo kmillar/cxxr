@@ -30,6 +30,7 @@
 #include "rho/GCStackRoot.hpp"
 #include "rho/AddressSanitizer.hpp"
 #include "rho/GCStackFrameBoundary.hpp"
+#include "rho/RValue.hpp"
 #include "Defn.h"
 #include "gc.h"
 
@@ -93,6 +94,9 @@ void GCStackRootBase::visitRoots(GCNode::const_visitor* visitor,
     {
         void* candidate_pointer = *reinterpret_cast<void**>(stack_pointer);
 	GCNode* node = GCNode::asGCNode(candidate_pointer);
+	if (!node && internal::RObjectProxy<>::isPointer(node)) {
+	    node = internal::RObjectProxy<>::getPointer(node);
+	}
 	if (node) {
 	    (*visitor)(node);
 	}

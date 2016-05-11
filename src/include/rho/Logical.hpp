@@ -46,11 +46,15 @@ namespace rho {
     public:
 	Logical() {}
 	explicit Logical(int i) : m_value(i) {
-	    assert(i == 0 || i == 1 || i == NA_LOGICAL);
+	    if (i == NA_INTEGER)
+		m_value = NA_LOGICAL;
+	    else
+		m_value = (i != 0);
+	    assert(m_value == 0 || m_value == 1 || m_value == NA_LOGICAL);
 	}
 
 	/*implicit*/ Logical(bool b) : m_value(b ? 1 : 0) {}
-	
+
 	explicit operator int() const { return m_value; }
 	explicit operator double() const { return isNA() ? NA_REAL : m_value; }
 

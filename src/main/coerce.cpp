@@ -51,6 +51,7 @@
 #include "rho/ExpressionVector.hpp"
 #include "rho/GCStackRoot.hpp"
 #include "rho/Promise.hpp"
+#include "rho/RValue.hpp"
 
 using namespace std;
 using namespace rho;
@@ -1337,7 +1338,7 @@ SEXP attribute_hidden do_asCharacterFactor(rho::Expression* call, const rho::Bui
 }
 
 /* used in attrib.c, eval.c and unique.c */
-SEXP Rf_asCharacterFactor(SEXP x)
+SEXP Rf_asCharacterFactor(RValue<> x)
 {
     SEXP ans;
 
@@ -1345,7 +1346,7 @@ SEXP Rf_asCharacterFactor(SEXP x)
 	Rf_error(_("attempting to coerce non-factor"));
 
     R_xlen_t i, n = XLENGTH(x);
-    SEXP labels = Rf_getAttrib(x, R_LevelsSymbol);
+    RValue<> labels = Rf_getAttrib(x, R_LevelsSymbol);
     if (TYPEOF(labels) != STRSXP)
 	Rf_error(_("malformed factor"));
     int nl = LENGTH(labels);
@@ -1363,6 +1364,9 @@ SEXP Rf_asCharacterFactor(SEXP x)
     return ans;
 }
 
+SEXP Rf_asCharacterFactor(SEXP x) {
+    return Rf_asCharacterFactor(RValue<>(x));
+}
 
 SEXP attribute_hidden do_asatomic(/*const*/ rho::Expression* call, const rho::BuiltInFunction* op, rho::Environment* rho, rho::RObject* const* args, int num_args, const rho::PairList* tags)
 {

@@ -186,7 +186,7 @@ GRID.VP.65::A::C::D
 > current.vpPath()
 GRID.VP.65::A::C 
 > current.vpTree()
-viewport[ROOT]->(viewport[GRID.VP.65]->(viewport[A]->(viewport[B], viewport[C]->(viewport[D])))) 
+viewport[ROOT]->(viewport[GRID.VP.65]->(viewport[A]->(viewport[C]->(viewport[D])), viewport[B])) 
 > current.viewport()
 viewport[C] 
 > current.vpTree(all=FALSE)

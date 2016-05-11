@@ -356,7 +356,7 @@ R_len_t attribute_hidden dispatch_length(RObject* x, Expression* call,
                                          Environment* rho) {
     R_xlen_t len = dispatch_xlength(x, call, rho);
 #ifdef LONG_VECTOR_SUPPORT
-    if (len > INT_MAX) return R_BadLongVector(x, __FILE__, __LINE__);
+    if (len > INT_MAX) return R_BadLongVector(__FILE__, __LINE__);
 #endif
     return (R_len_t) len;
 }

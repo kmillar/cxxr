@@ -664,7 +664,7 @@ int Seql(SEXP a, SEXP b)
 
 
 #ifdef LONG_VECTOR_SUPPORT
-R_len_t NORET R_BadLongVector(SEXP x, const char *file, int line)
+R_len_t NORET R_BadLongVector(const char *file, int line)
 {
     error(_("long vectors not supported yet: %s:%d"), file, line);
 }

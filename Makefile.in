@@ -58,10 +58,10 @@ R: Makefile gitonly
 docs: doc_docs library_docs
 
 doc_docs: R FORCE
-	-$(MAKE) -C doc $@
+	-$(MAKE) -C doc docs
 
 library_docs: R FORCE
-	-$(MAKE) -C src/library $@
+	-$(MAKE) -C src/library docs
 
 doxygen: FORCE
 	doxygen $(srcdir)/doc/doxygen/doxygen.conf

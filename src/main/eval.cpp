@@ -777,7 +777,7 @@ static SEXP assignCall(SEXP op, SEXP symbol, SEXP fun,
 }
 
 
-Rboolean asLogicalNoNA(SEXP s, SEXP call)
+bool Rf_asLogicalNoNA(SEXP s, SEXP call)
 {
     int cond = NA_LOGICAL;
 
@@ -808,7 +808,7 @@ Rboolean asLogicalNoNA(SEXP s, SEXP call)
 	    _("argument is of length zero");
 	Rf_errorcall(call, msg);
     }
-    return static_cast<Rboolean>(cond);
+    return cond;
 }
 
 
@@ -855,7 +855,7 @@ SEXP attribute_hidden do_if(SEXP call, SEXP op, SEXP args, SEXP rho)
     int vis=0;
 
     PROTECT(Cond = Rf_eval(CAR(args), rho));
-    if (asLogicalNoNA(Cond, call))
+    if (Rf_asLogicalNoNA(Cond, call))
 	Stmt = CAR(CDR(args));
     else {
 	if (length(args) > 2) 
@@ -1059,7 +1059,7 @@ static SEXP do_while_impl(SEXP call, SEXP op, SEXP args, SEXP rho)
     Environment* env = SEXP_downcast<Environment*>(rho);
     Environment::LoopScope loopscope(env);
 
-    while (asLogicalNoNA(Rf_eval(CAR(args), rho), call)) {
+    while (Rf_asLogicalNoNA(Rf_eval(CAR(args), rho), call)) {
 	Evaluator::maybeCheckForUserInterrupts();
 	RObject* ans;
 	DO_LOOP_RDEBUG(call, op, args, rho, bgn);

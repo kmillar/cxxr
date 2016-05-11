@@ -207,10 +207,10 @@ extern "C" {
 #if (R_XLEN_T_MAX > R_LEN_T_MAX)
 # define LONG_VECTOR_SUPPORT
 # define R_SHORT_LEN_MAX R_LEN_T_MAX
-R_len_t NORET R_BadLongVector(SEXP, const char *, int);
+R_len_t NORET R_BadLongVector(const char *, int);
 # define IS_LONG_VEC(x) (XLENGTH(x) > R_LEN_T_MAX)
-# define LENGTH(x) (IS_LONG_VEC(x) ? R_BadLongVector(x, __FILE__, __LINE__) : (R_len_t)XLENGTH(x))
-# define TRUELENGTH(x) (IS_LONG_VEC(x) ? R_BadLongVector(x, __FILE__, __LINE__) : (R_len_t)XTRUELENGTH(x))
+# define LENGTH(x) (IS_LONG_VEC(x) ? R_BadLongVector(__FILE__, __LINE__) : (R_len_t)XLENGTH(x))
+# define TRUELENGTH(x) (IS_LONG_VEC(x) ? R_BadLongVector(__FILE__, __LINE__) : (R_len_t)XTRUELENGTH(x))
 #else
 # define LENGTH(x) XLENGTH(x)
 # define TRUELENGTH(x) XTRUELENGTH(x)
