@@ -48,6 +48,8 @@
 #ifndef DEFN_H_
 #define DEFN_H_
 
+#include "config.h"
+
 #ifdef HAVE_VISIBILITY_ATTRIBUTE
 # define attribute_visible __attribute__ ((visibility ("default")))
 # define attribute_hidden __attribute__ ((visibility ("hidden")))
@@ -68,8 +70,9 @@
 #include <R_ext/Complex.h>
 
 #ifdef __cplusplus
-#include "rho/ArgList.hpp"
-#include "rho/Frame.hpp"
+#include "rho/unrho.hpp"
+#include <utility>
+
 extern "C" {
 #endif
 
@@ -114,16 +117,14 @@ extern0 SEXP    R_dot_Class;  /* ".Class" */
 extern0 SEXP    R_dot_GenericCallEnv;  /* ".GenericCallEnv" */
 extern0 SEXP    R_dot_GenericDefEnv;  /* ".GenericDefEnv" */
 
-
-int IS_BYTES(SEXP x);
-void SET_BYTES(SEXP x);
-int IS_ASCII(SEXP x);
-
 #include "Errormsg.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+int IS_BYTES(SEXP x);
+int IS_ASCII(SEXP x);
 
 extern void R_ProcessEvents(void);
 #ifdef Win32
@@ -132,6 +133,22 @@ extern void R_WaitEvent(void);
 
 #ifdef __cplusplus
 }  /* extern "C" */
+
+namespace rho {
+    enum class MissingArgHandling {
+	Drop,
+        Keep,
+        Error,
+    };
+    class Environment;
+    class Expression;
+    class RObject;
+    class String;
+    template<typename T> class GCRoot;
+    template<typename T> class RHandle;
+    template<typename T, SEXPTYPE sexptype> class FixedVector;
+    typedef FixedVector<RHandle<String>, STRSXP> StringVector;
+}
 #endif
 
 #ifdef R_USE_SIGNALS
@@ -427,13 +444,10 @@ extern void 	R_setupHistory(void);
 
 /* Warnings/Errors */
 extern0 int	R_CollectWarnings INI_as(0);	/* the number of warnings */
-#ifdef __cplusplus
-  extern rho::GCRoot<rho::ListVector> R_Warnings;  /* the warnings and their calls */
-#endif
 extern0 int	R_ShowErrorMessages INI_as(1);	/* show error messages? */
 #ifdef __cplusplus
-extern rho::GCRoot<> R_HandlerStack;	/* Condition handler stack */
-extern rho::GCRoot<> R_RestartStack;	/* Stack of available restarts */
+extern rho::GCRoot<rho::RObject> R_HandlerStack;	/* Condition handler stack */
+extern rho::GCRoot<rho::RObject> R_RestartStack;	/* Stack of available restarts */
 #endif
 extern0 Rboolean R_warn_partial_match_dollar INI_as(FALSE);
 extern0 Rboolean R_warn_partial_match_attr INI_as(FALSE);
@@ -699,9 +713,9 @@ double	R_FileMtime(const char *);
 #ifndef __cplusplus
 /* In C code, R_varloc_t is an opaque pointer: */
 typedef struct R_varloc_st *R_varloc_t;
-#endif
 R_varloc_t R_findVarLocInFrame(SEXP, SEXP);
 Rboolean R_GetVarLocMISSING(R_varloc_t);
+#endif
 
 /* deparse option bits: change do_dump if more are added */
 
@@ -775,6 +789,7 @@ void R_InitialData(void);
 
 #ifdef __cplusplus
 }  // extern "C"
+
 std::pair<bool, SEXP> R_possible_dispatch(SEXP, SEXP, SEXP, SEXP, Rboolean);
 int Rf_DispatchOrEval(SEXP, SEXP, SEXP, SEXP, SEXP*,
 		      rho::MissingArgHandling, int);
@@ -905,7 +920,7 @@ const char *Rf_EncodeRaw(Rbyte, const char *);
 const char *Rf_EncodeString(SEXP, int, int, Rprt_adj);
 const char *Rf_EncodeReal2(double, int, int, int);
 const char *Rf_EncodeChar(SEXP);
-
+int ENC_KNOWN(SEXP x);
 
 /* main/sort.c */
 void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,

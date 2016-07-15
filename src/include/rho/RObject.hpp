@@ -589,11 +589,7 @@ namespace rho {
 
     namespace ElementTraits {
 	template<typename T>
-	struct Duplicate<T*> {
-	    T* operator()(T* value) const {
-		return RObject::clone(value);
-	    }
-	};
+	struct Duplicate<T*> { };  // Unused.
     }  // namespace ElementTraits
 }  // namespace rho
 

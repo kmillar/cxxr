@@ -45,12 +45,14 @@ using std::FILE;
 #  endif
 #  include <climits>
 #  include <cstddef>
+#  include <cstdint>
 # endif
 #else
 # ifndef NO_C_HEADERS
 #  include <stdio.h>
 #  include <limits.h> /* for INT_MAX */
 #  include <stddef.h> /* for ptrdiff_t */
+#  include <stdint.h> /* for PTRDIFF_MAX */
 # endif
 #endif
 

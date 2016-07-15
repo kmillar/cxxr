@@ -40,6 +40,7 @@
 #include <Rmath.h> // provides M_2PI
 #include <R_ext/GraphicsEngine.h>
 #include "rho/GCStackRoot.hpp"
+#include "rho/RObject.hpp"
 
 using namespace rho;
 

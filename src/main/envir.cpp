@@ -310,13 +310,13 @@ static R_varloc_t findVarLocInFrame(SEXP rho, SEXP symbol, Rboolean * /*canCache
 */
 
 /* used in methods */
-R_varloc_t R_findVarLocInFrame(SEXP rho, SEXP symbol)
+extern "C" R_varloc_t R_findVarLocInFrame(SEXP rho, SEXP symbol)
 {
     return findVarLocInFrame(rho, symbol, nullptr);
 }
 
 /* used in methods */
-Rboolean R_GetVarLocMISSING(R_varloc_t vl)
+extern "C" Rboolean R_GetVarLocMISSING(R_varloc_t vl)
 {
     return Rboolean(vl->origin());
 }

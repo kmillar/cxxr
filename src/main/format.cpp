@@ -46,6 +46,7 @@
 #include <config.h>
 #endif
 
+#include "rho/String.hpp"
 #include <Defn.h>
 #include <float.h> /* for DBL_EPSILON */
 #include "Rcomplex.h"

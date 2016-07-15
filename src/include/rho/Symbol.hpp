@@ -35,6 +35,7 @@
 #include "rho/GCRoot.hpp"
 #include "rho/SEXP_downcast.hpp"
 #include "rho/String.hpp"
+#include "Defn.h"
 
 namespace rho {
     /** @brief Class used to represent R symbols.
@@ -350,17 +351,16 @@ namespace rho {
 }  // namespace rho
 
 
-extern "C" {
-
-    /* Pseudo-objects */
-    extern SEXP R_MissingArg;
-    extern SEXP R_UnboundValue;
-
     /* Symbol Table Shortcuts */
 #define PREDEFINED_SYMBOL(C_NAME, RHO_NAME, R_NAME) \
     extern SEXP C_NAME;
 #include "rho/PredefinedSymbols.hpp"
 #undef PREDEFINED_SYMBOL
+extern "C" {
+
+    /* Pseudo-objects */
+    extern SEXP R_MissingArg;
+    extern SEXP R_UnboundValue;
 
     /** @brief Does symbol relate to a <tt>...</tt> expression?
      *

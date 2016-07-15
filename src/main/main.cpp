@@ -177,7 +177,6 @@ char R_ParseContext[PARSE_CONTEXT_SIZE] = "";
 int R_ParseContextLast = 0; /* last character in context buffer */
 int R_ParseContextLine; /* Line in file of the above */
 attribute_hidden int	R_CollectWarnings = 0;	/* the number of warnings */
-GCRoot<ListVector>	R_Warnings;	    /* the warnings and their calls */
 attribute_hidden int	R_ShowErrorMessages = 1;     /* show error messages? */
 attribute_hidden Rboolean R_warn_partial_match_dollar = FALSE;
 attribute_hidden Rboolean R_warn_partial_match_attr = FALSE;
@@ -974,8 +973,6 @@ void setup_Rmainloop(void)
 
     R_Is_Running = 1;
     R_check_locale();
-
-    R_Warnings = R_NilValue;
 
     /* This is the same as R_BaseEnv, but this marks the environment
        of functions as the namespace and not the package. */

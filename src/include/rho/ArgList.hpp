@@ -34,16 +34,11 @@
 #include "rho/PairList.hpp"
 #include "rho/Symbol.hpp"
 #include "R_ext/Error.h"
+#include "Defn.h"
 
 namespace rho {
     class DottedArgs;
     class Expression;
-
-    enum class MissingArgHandling {
-	Drop,
-	Keep,
-	Error,
-    };
 
     /** @brief Class encapsulating the argument list of a FunctionBase.
      *
