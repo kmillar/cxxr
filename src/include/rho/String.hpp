@@ -339,7 +339,7 @@ namespace rho {
 
     // Make the default value for a String point to a blank string:
     template <>
-    inline GCEdge<String>::GCEdge()
+    inline GCEdge<String>::GCEdge() : m_target(nullptr)
     {
 	operator=(String::blank());
     }

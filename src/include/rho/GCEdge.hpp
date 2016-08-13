@@ -31,62 +31,13 @@
 #define GCEDGE_HPP 1
 
 #include "rho/GCNode.hpp"
+#include "rho/GCStackRoot.hpp"
+#include "rho/GCValue.hpp"
 #include "rho/ElementTraits.hpp"
 
 namespace rho {
     class RObject;
-
-    /** @brief Untemplated base class for GCEdge.
-     */
-    class GCEdgeBase {
-    public:
-	/** @brief Null the encapsulated pointer.
-	 */
-	void detach();
-    protected:
-	GCEdgeBase()
-	    : m_target(nullptr)
-	{}
-
-	/** @brief Copy constructor.
-	 *
-	 * @param source Pattern for the copy.
-	 */
-	GCEdgeBase(const GCEdgeBase& source)
-	    : m_target(source.m_target)
-	{
-	    GCNode::incRefCount(m_target);
-	}
-	    
-	~GCEdgeBase()
-	{
-	    GCNode::decRefCount(m_target);
-	}
-
-	/** @brief Get target of this edge.
-	 *
-	 * @return Pointer to the target (if any) of this GCEdgeBase.
-	 */
-	const GCNode* target() const
-	{
-	    return m_target;
-	}
-    protected:
-	/** @brief Redirect the GCEdge to point at a (possibly) different node.
-         *
-         * @param newtarget Pointer to the object to which reference is now
-         *           to be made.
-         */
-	void retarget(const GCNode* newtarget)
-	{
-	    GCNode::incRefCount(newtarget);
-	    const GCNode* oldtarget = m_target;
-	    m_target = newtarget;
-	    GCNode::decRefCount(oldtarget);
-	}
-    private:
-	const GCNode* m_target;
-    };
+    template<typename> class GCStackRoot;
 
     /** @brief Directed edge in the graph whose nodes are GCNode objects.
      *
@@ -107,11 +58,11 @@ namespace rho {
      *           GCEdge<const String>.
      */
     template <class T = RObject>
-    class GCEdge : public GCEdgeBase {
+    class GCEdge {
     public:
 	typedef T type;
 
-	GCEdge()
+	GCEdge() : m_target(nullptr)
 	{}
 
 	// explicit GCEdge(T* target) is intentionally not defined here.
@@ -132,13 +83,33 @@ namespace rho {
 	 * will point to the same object (if any) as \a source. 
 	 */
 	GCEdge(const GCEdge<T>& source)
-	    : GCEdgeBase(source)
+	    : m_target(source.m_target)
+	{
+	    m_target.incRefCount();
+	}
+
+	GCEdge(const GCStackRoot<T>& source)
+	    : GCEdge(source.get())
 	{}
+
+	~GCEdge() {
+	    m_target.decRefCount();
+	}
 
 	GCEdge<T>& operator=(const GCEdge<T>& source)
 	{
-	    retarget(source);
+	    return operator=(source.get());
+	}
+
+	GCEdge<T>& operator=(GCValue<T> newtarget)
+	{
+	    retarget(newtarget);
 	    return *this;
+	}
+
+	GCEdge<T>& operator=(const GCStackRoot<T>& newtarget)
+	{
+	    return operator=(newtarget.get());
 	}
 
 	GCEdge<T>& operator=(T* newtarget)
@@ -161,19 +132,46 @@ namespace rho {
 	    return get();
 	}
 
+	operator GCValue<T>() const {
+	    return m_target;
+	}
+
 	/** @brief Access the target pointer.
 	 *
 	 * @return pointer to the current target (if any) of the edge.
 	 */
 	T* get() const
 	{
-	    return static_cast<T*>(const_cast<GCNode*>(target()));
+	    return m_target;
 	}
 
+	/** @brief Null the encapsulated pointer.
+	 */
+	void detach() {
+	    m_target.decRefCount();
+	    m_target = nullptr;
+	}
     private:
+	GCValue<T> m_target;
+
+	/** @brief Redirect the GCEdge to point at a (possibly) different node.
+         *
+         * @param newtarget Pointer to the object to which reference is now
+         *           to be made.
+         */
+	void retarget(GCValue<T> newtarget)
+	{
+	    newtarget.incRefCount();
+	    m_target.decRefCount();
+	    m_target = newtarget;
+	}
+
 	// A GCEdge is a pointer, not an array.
 	T& operator[](size_t) const = delete;
     };
+
+    template<typename T> struct IsGCEdge { typedef std::false_type type; };
+    template<typename T> struct IsGCEdge<GCEdge<T>> { typedef std::true_type type; };
 
     // Partial specializations of ElementTraits:
     namespace ElementTraits {

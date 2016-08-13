@@ -36,6 +36,7 @@ sources_cxx = ArgMatchertest.cpp Allocatortest.cpp CellPooltest.cpp \
 unit_test_sources = \
 	BuiltInFunctionTest.cpp \
 	ControlFlowTests.cpp \
+	DiscriminatedUnionTests.cpp \
 	EvaluationTests.cpp \
 	FixedVectorTest.cpp \
 	FrameTests.cpp \

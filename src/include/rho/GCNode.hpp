@@ -67,6 +67,9 @@
  */
 
 namespace rho {
+    template<typename>
+    class GCValue;
+
     /** @brief Base class for objects managed by the garbage collector.
      *
      * Abstract base class for all objects managed by the garbage
@@ -255,9 +258,11 @@ namespace rho {
 	friend class GCRootBase;
 	friend class GCStackFrameBoundary;
 	friend class GCStackRootBase;
+	template<typename> friend class GCValue;
 	friend class NodeStack;
+	friend class GCValueBase;
 	friend class WeakRef;
-
+	
 	/** Visitor class used to mark nodes.
 	 *
 	 * This visitor class is used during the mark phase of garbage
@@ -401,7 +406,7 @@ namespace rho {
 
 	// Increment the reference count.  Overflow is handled by the
 	// stickiness of the MSB.
-	static void incRefCount(const GCNode* node)
+	static void incRefCount(const GCNode* node) noexcept
 	{
 	    if (node) {
 		unsigned char& refcount_flags = node->m_refcount_flags;
@@ -437,7 +442,6 @@ namespace rho {
 	 */
 	static void sweep();
 
-	friend class GCEdgeBase;
 	friend class GCTestHelper;
 
     protected:

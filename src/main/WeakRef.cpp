@@ -53,7 +53,8 @@ namespace {
 
 WeakRef::WeakRef(RObject* key, RObject* value, FunctionBase* R_finalizer,
 		 bool finalize_on_exit)
-    : m_Cfinalizer(0),
+    : RObject(WEAKREFSXP),
+      m_Cfinalizer(0),
       m_ready_to_finalize(false),
       m_finalize_on_exit(finalize_on_exit)
 {
@@ -79,7 +80,8 @@ WeakRef::WeakRef(RObject* key, RObject* value, FunctionBase* R_finalizer,
 
 WeakRef::WeakRef(RObject* key, RObject* value, R_CFinalizer_t C_finalizer,
 		 bool finalize_on_exit)
-    : m_Cfinalizer(C_finalizer),
+    : RObject(WEAKREFSXP),
+      m_Cfinalizer(C_finalizer),
       m_ready_to_finalize(false), m_finalize_on_exit(finalize_on_exit)
 {
     m_key = key;

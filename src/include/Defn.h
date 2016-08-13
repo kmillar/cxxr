@@ -145,9 +145,9 @@ namespace rho {
     class RObject;
     class String;
     template<typename T> class GCRoot;
-    template<typename T> class RHandle;
+    template<typename T> class GCEdge;
     template<typename T, SEXPTYPE sexptype> class FixedVector;
-    typedef FixedVector<RHandle<String>, STRSXP> StringVector;
+    typedef FixedVector<GCEdge<String>, STRSXP> StringVector;
 }
 #endif
 

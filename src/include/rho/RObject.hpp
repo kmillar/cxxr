@@ -499,21 +499,14 @@ namespace rho {
 	virtual void unpackGPBits(unsigned int gpbits);
 
 	// Virtual functions of GCNode:
-	void detachReferents() override
-	{
-	    m_attrib.detach();
-	}
+	void detachReferents() override;
 
 	void visitReferents(const_visitor* v) const override;
     protected:
 	/**
 	 * @param stype Required type of the RObject.
 	 */
-	explicit RObject(SEXPTYPE stype = CXXSXP)
-	    : m_type(stype & s_sexptype_mask), m_named(0),
-	      m_memory_traced(false), m_missing(0), m_argused(0),
-	      m_active_binding(false), m_binding_locked(false)
-	{}
+	explicit RObject(SEXPTYPE stype);
 
 	/** @brief Copy constructor.
 	 *

@@ -1368,7 +1368,8 @@ namespace {
 	HandlerEntry(String* the_class, Environment* parent_env,
 		     RObject* handler, Environment* environment,
 		     ListVector* result, bool calling)
-	    : m_calling(calling)
+	    : RObject(CXXSXP),
+	      m_calling(calling)
 	{
 	    m_class = the_class;
 	    m_parent_environment = parent_env;

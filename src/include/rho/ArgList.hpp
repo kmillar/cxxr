@@ -30,6 +30,7 @@
 #define ARGLIST_HPP 1
 
 #include <boost/range.hpp>
+#include "rho/Environment.hpp"
 #include "rho/GCStackRoot.hpp"
 #include "rho/PairList.hpp"
 #include "rho/Symbol.hpp"

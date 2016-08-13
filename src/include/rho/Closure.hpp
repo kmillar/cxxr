@@ -35,6 +35,7 @@
 #include "rho/ArgMatcher.hpp"
 #include "rho/Environment.hpp"
 #include "rho/PairList.hpp"
+#include "rho/jit/CompiledExpression.hpp"
 
 namespace rho {
     class ClosureContext;

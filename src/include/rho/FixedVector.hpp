@@ -361,7 +361,7 @@ void rho::FixedVector<T, ST>::detachElements(std::true_type)
 template <typename T, SEXPTYPE ST>
 void rho::FixedVector<T, ST>::detachReferents()
 {
-    detachElements(typename std::is_base_of<GCEdgeBase, T>::type());
+    detachElements(typename IsGCEdge<T>::type());
     VectorBase::detachReferents();
 }
 
@@ -394,7 +394,7 @@ void rho::FixedVector<T, ST>::visitElements(const_visitor* v,
 template <typename T, SEXPTYPE ST>
 void rho::FixedVector<T, ST>::visitReferents(const_visitor* v) const
 {
-    visitElements(v, typename std::is_base_of<GCEdgeBase, T>::type());
+    visitElements(v, typename IsGCEdge<T>::type());
     VectorBase::visitReferents(v);
 }
 
