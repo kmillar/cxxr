@@ -81,7 +81,9 @@ static int inPrintWarnings = 0;
 static int immediateWarning = 0;
 static int noBreakWarning = 0;
 
-static GCRoot<ListVector> R_Warnings;  /* the warnings and their calls */
+/* The warnings and their calls.
+   Also refered to from tests/rho/EvaluationTests.cpp */
+GCRoot<ListVector> R_Warnings;
 
 static void try_jump_to_restart(void);
 // The next is crucial to the use of NORET attributes.

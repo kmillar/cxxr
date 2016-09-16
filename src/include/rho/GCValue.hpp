@@ -213,12 +213,14 @@ namespace rho {
     class GCValue : public GCValue<GCNode>
     {
     public:
-        /* implicit */ GCValue(const T* value) : GCValue<GCNode>(value) {}
+        /* implicit */ GCValue(const T* value) : GCValue<GCNode>(
+            // reinterpret_cast because T might not be a complete type.
+            reinterpret_cast<const GCNode*>(value)) {}
 
         GCValue(const GCValue<T>&) = default;
 
         /* implicit */ operator T*() const {
-            return static_cast<T*>(
+            return reinterpret_cast<T*>(
                 static_cast<GCNode*>(
                     static_cast<const GCValue<GCNode>&>(*this)));
         }

@@ -584,6 +584,21 @@ namespace rho {
 	template<typename T>
 	struct Duplicate<T*> { };  // Unused.
     }  // namespace ElementTraits
+
+    inline RObject::RObject(SEXPTYPE stype)
+	: m_type(stype & s_sexptype_mask), m_named(0),
+	  m_memory_traced(false), m_missing(0), m_argused(0),
+	  m_active_binding(false), m_binding_locked(false)
+    {}
+
+    inline const rho::PairList* rho::RObject::attributes() const {
+	return m_attrib;
+    }
+
+    inline void RObject::detachReferents() {
+	m_attrib.detach();
+    }
+
 }  // namespace rho
 
 extern "C" {

@@ -32,9 +32,9 @@
 #include "Defn.h"
 #include "Parse.h"
 
-#undef parse
-
 using namespace rho;
+
+extern GCRoot<ListVector> R_Warnings;  // In errors.cpp
 
 void EvaluatorTest::runEvaluatorTests(const std::vector<SingleTest>& tests)
 {
