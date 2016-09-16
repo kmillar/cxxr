@@ -124,13 +124,7 @@ namespace rho {
         bool isInteger() const {
             return m_value.isInteger(IntegerTag);
         }
-
-        // These functions return references so that callers can get a pointer
-        // to the value if desired.
-        const int& getInteger() const {
-            return m_value.getInteger(IntegerTag);
-        }
-        int& getInteger() {
+        int getInteger() const {
             return m_value.getInteger(IntegerTag);
         }
 
@@ -141,15 +135,10 @@ namespace rho {
         bool isLogical() const {
             return m_value.isInteger(LogicalTag);
         }
-
-        const Logical& getLogical() const {
+        Logical getLogical() const {
             static_assert(sizeof(Logical) == sizeof(int),
                           "Logical has unexpected fields");
-            return reinterpret_cast<const Logical&>(
-                m_value.getInteger(LogicalTag));
-        }
-        Logical& getLogical() {
-            return reinterpret_cast<Logical&>(m_value.getInteger(LogicalTag));
+            return Logical(m_value.getInteger(LogicalTag));
         }
 
         //@ store a single double.  Note that not all doubles can be stored.
@@ -159,10 +148,9 @@ namespace rho {
         bool isDouble() const {
             return m_value.isDouble();
         }
-        const double& getDouble() const {
+        double getDouble() const {
             return m_value.getDouble();
         }
-        // No function returning a double lvalue, as not all values are legal.
 
         //* A value is storable if we can store and retrieve it.
         static bool isStorableDoubleValue(double d) {

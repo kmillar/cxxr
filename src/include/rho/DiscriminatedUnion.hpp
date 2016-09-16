@@ -115,14 +115,7 @@ namespace rho {
             return (m_value.signed_bits & 0xffffffff00000000)
                 == makeIntegerTag(tag);
         }
-
-        // These functions return references so that callers can get a pointer
-        // to the value if desired.
-        const int& getInteger(uint16_t tag) const {
-            assert(isInteger(tag));
-            return getLower32Bits();
-        }
-        int& getInteger(uint16_t tag) {
+        int getInteger(uint16_t tag) const {
             assert(isInteger(tag));
             return getLower32Bits();
         }
@@ -134,11 +127,10 @@ namespace rho {
         bool isDouble() const {
             return getStorageType() == DOUBLE;
         }
-        const double& getDouble() const {
+        double getDouble() const {
             assert(isDouble());
             return m_value.double_value;
         }
-        // No function returning a double lvalue, as not all values are legal.
 
         //* A value is storable if we can store and retrieve it.
         static bool isStorableDoubleValue(double d) {
@@ -242,18 +234,10 @@ namespace rho {
                                            ^ (m_value.bits << 60));
         }
 
-        int& getLower32Bits() {
+        int getLower32Bits() const {
             static_assert(sizeof(int) == 4,
                           "rho expects 32 bit integers.");
-#ifdef WORDS_BIGENDIAN
-            return *reinterpret_cast<int*>(&m_value.signed_bits) + 1;
-#else
-            return *reinterpret_cast<int*>(&m_value.signed_bits);
-#endif
-        }
-
-        const int& getLower32Bits() const {
-            return const_cast<DiscriminatedUnion*>(this)->getLower32Bits();
+            return m_value.signed_bits & 0xffffffff;
         }
 
         static uint64_t makeIntegerTag(uint16_t index) {
