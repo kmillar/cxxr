@@ -75,7 +75,7 @@ PairList* VectorBase::resizeAttributes(const PairList* attributes,
     GCStackRoot<PairList> ans(PairList::cons(nullptr));  // dummy first link
     PairList* op = ans;
     for (const PairList* ip = attributes; ip; ip = ip->tail()) {
-	const RObject* tag = ip->tag();
+	const Symbol* tag = ip->tag();
 	RObject* value = ip->car();
 
 	if (tag == NamesSymbol) {

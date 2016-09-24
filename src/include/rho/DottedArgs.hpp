@@ -52,7 +52,7 @@ namespace rho {
 	 * @param tg Pointer to the 'tag' of the element to be constructed.
 	 */
 	explicit DottedArgs(RObject* cr = nullptr, PairList* tl = nullptr,
-			    const RObject* tg = nullptr)
+			    const Symbol* tg = nullptr)
 	    : ConsCell(DOTSXP, cr, tl, tg)
 	{}
 

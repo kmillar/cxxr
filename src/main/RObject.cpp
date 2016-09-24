@@ -339,7 +339,7 @@ void RObject::TransmuteConsCell(ConsCell* object, SEXPTYPE dest_type)
     // Store the fields from the object.
     RObject* car = object->car();
     PairList* tail = object->tail();
-    const RObject* tag = object->tag();
+    const Symbol* tag = object->tag();
 
     // Transmute the object.
     std::function<ConsCell*(void*)> constructor;

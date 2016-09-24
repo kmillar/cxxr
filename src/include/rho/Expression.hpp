@@ -68,7 +68,7 @@ namespace rho {
 	 * @param tg Pointer to the 'tag' of the element to be constructed.
 	 */
 	explicit Expression(RObject* cr = nullptr, PairList* tl = nullptr,
-			    const RObject* tg = nullptr)
+			    const Symbol* tg = nullptr)
 	    : ConsCell(LANGSXP, cr, tl, tg)
 	{}
 
@@ -229,7 +229,7 @@ namespace rho {
 	 */
 	explicit CachingExpression(RObject* cr = nullptr,
 				   PairList* tl = nullptr,
-				   const RObject* tg = nullptr)
+				   const Symbol* tg = nullptr)
 	    : Expression(cr, tl, tg)
 	{}
 

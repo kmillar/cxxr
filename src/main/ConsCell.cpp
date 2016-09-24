@@ -145,7 +145,7 @@ void SET_TAG(SEXP x, SEXP y)
     if (!x)
 	Rf_error(_("bad value"));
     ConsCell& cc = *SEXP_downcast<ConsCell*>(x);
-    cc.setTag(y);
+    cc.setTag(SEXP_downcast<Symbol*>(y));
 }
 
 SEXP SETCAR(SEXP x, SEXP y)

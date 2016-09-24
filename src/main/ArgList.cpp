@@ -41,7 +41,7 @@ using namespace rho;
 
 // Implementation of ArgList::coerceTag() is in coerce.cpp
 
-PairList* ArgList::append(RObject* value, const RObject* tag,
+PairList* ArgList::append(RObject* value, const Symbol* tag,
 			  PairList* last_element) {
     PairList* object = PairList::cons(value, nullptr, tag);
     if (last_element)
@@ -127,7 +127,7 @@ void ArgList::merge(const ConsCell* extraargs)
     if (m_status != PROMISED)
 	Rf_error("Internal error: ArgList::merge() requires PROMISED ArgList");
     // Convert extraargs into a doubly linked list:
-    typedef std::list<pair<const RObject*, RObject*> > Xargs;
+    typedef std::list<pair<const Symbol*, RObject*> > Xargs;
     Xargs xargs;
     for (const ConsCell* cc = extraargs; cc; cc = cc->tail())
 	xargs.push_back(make_pair(cc->tag(), cc->car()));
@@ -179,7 +179,7 @@ RObject* ArgList::get(int position) const {
     return cell ? cell->car() : nullptr;
 }
 
-const RObject* ArgList::getTag(int position) const {
+const Symbol* ArgList::getTag(int position) const {
     ConsCell* cell = m_list.get();
     for (int i = 0; i < position && cell != nullptr; i++) {
 	cell = cell->tail();

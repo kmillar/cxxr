@@ -45,6 +45,7 @@
 #include "rho/GCManager.hpp"
 #include "rho/GCRoot.hpp"
 #include "rho/SEXP_downcast.hpp"
+#include "rho/Symbol.hpp"
 
 namespace rho {
     class PairList;
@@ -244,7 +245,7 @@ namespace rho {
 	 * @param tg Pointer to the new tag object (or a null
 	 *           pointer).
 	 */
-	void setTag(const RObject* tg)
+	void setTag(const Symbol* tg)
 	{
 	    m_tag = tg;
 	}
@@ -269,7 +270,7 @@ namespace rho {
 	/**
 	 * @return a pointer to the 'tag' of this ConsCell.
 	 */
-	const RObject* tag() const
+	const Symbol* tag() const
 	{
 	    return m_tag;
 	}
@@ -303,7 +304,7 @@ namespace rho {
 	 */
 	explicit ConsCell(SEXPTYPE st,
 			  RObject* cr = nullptr, PairList* tl = nullptr,
-			  const RObject* tg = nullptr);
+			  const Symbol* tg = nullptr);
 
 	/** @brief Copy constructor.
 	 *
@@ -343,7 +344,7 @@ namespace rho {
 
 	GCEdge<> m_car;
 	GCEdge<PairList> m_tail;
-	GCEdge<const RObject> m_tag;
+	GCEdge<const Symbol> m_tag;
 
 	// Not implemented yet.  Declared to prevent
 	// compiler-generated version:
@@ -440,7 +441,7 @@ namespace rho {
 	 * @param tg Pointer to the 'tag' of the element to be constructed.
 	 */
 	explicit PairList(RObject* cr = nullptr, PairList* tl = nullptr,
-			  const RObject* tg = nullptr)
+			  const Symbol* tg = nullptr)
 	    : ConsCell(LISTSXP, cr, tl, tg)
 	{}
 
@@ -467,7 +468,7 @@ namespace rho {
 	 * @return Pointer to newly created PairList element.
 	 */
 	static PairList* cons(RObject* cr, PairList* tl=nullptr,
-			      const RObject* tag = nullptr)
+			      const Symbol* tag = nullptr)
 	{
 	    GCManager::GCInhibitor no_gc;
             // We inhibit garbage collection here to avoid (a) the need
@@ -546,7 +547,7 @@ namespace rho {
     }
 
     inline ConsCell::ConsCell(SEXPTYPE st, RObject* cr,
-			      PairList* tl, const RObject* tg)
+			      PairList* tl, const Symbol* tg)
 	: RObject(st)
     {
         m_car = cr;
@@ -650,7 +651,7 @@ extern "C" {
 	using namespace rho;
 	if (!e) return nullptr;
 	ConsCell& cc = *SEXP_downcast<ConsCell*>(e);
-	return const_cast<RObject*>(cc.tag());
+	return const_cast<Symbol*>(cc.tag());
     }
 
     /**

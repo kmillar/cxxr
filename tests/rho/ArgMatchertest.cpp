@@ -107,10 +107,10 @@ namespace {
 		    value = Symbol::missingArgument();
 		else value
 		    = const_cast<String*>(String::obtain(valstr.c_str()));
-		const RObject* tag = 0;
+		const Symbol* tag = 0;
 		if (!namestr.empty())
 		    tag = Symbol::obtain(namestr.c_str());
-		ans = PairList::cons(value, ans, const_cast<RObject*>(tag));
+		ans = PairList::cons(value, ans, tag);
 	    }
 	    return ans;
 	}

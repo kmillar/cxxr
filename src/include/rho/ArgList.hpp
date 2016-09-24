@@ -306,7 +306,7 @@ namespace rho {
 
         /** @brief Return the tag at the specified position.
          */
-        const RObject* getTag(int position) const;
+        const Symbol* getTag(int position) const;
 
 	/** @brief Iterator through the argument list, expanding '...'.
 	 *
@@ -502,7 +502,7 @@ namespace rho {
 	 *
 	 * @return A pointer to the current last element of m_list.
 	 */
-	PairList* append(RObject* value, const RObject* tag,
+	PairList* append(RObject* value, const Symbol* tag,
 			 PairList* last_element);
 
 	void wrapInForcedPromises(Environment* env,

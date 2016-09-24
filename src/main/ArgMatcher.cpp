@@ -213,7 +213,7 @@ public:
 	ConsCell* dots = nullptr;
 	for (int index : arg_indices) {
 	    RObject* value = all_args->get(index);
-	    const RObject* tag = all_args->getTag(index);
+	    const Symbol* tag = all_args->getTag(index);
 	    if (dots) {
 		PairList* next_item = new PairList(value, nullptr, tag);
 		dots->setTail(next_item);
