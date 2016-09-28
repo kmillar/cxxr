@@ -28,6 +28,8 @@
  * @brief Class rho::String and associated C interface.
  */
 
+#include "rho/RObject.hpp"
+
 #ifndef RHO_STRING_H
 #define RHO_STRING_H
 
@@ -35,7 +37,6 @@
 #include "rho/Allocator.hpp"
 #include "rho/GCRoot.hpp"
 #include "rho/SEXP_downcast.hpp"
-#include "rho/VectorBase.hpp"
 #include <string>
 #include <unordered_map>
 
@@ -47,13 +48,13 @@ namespace rho {
      * At any one time, at most one String object with a particular
      * text and encoding may exist.
      *
-     * @note When the method size() of VectorBase is applied to a
+     * @note When the method size() is applied to a
      * String, it returns the number of <tt>char</tt>s that the String
      * comprises.  If the string uses a multibyte encoding scheme,
      * this may be different from the number of Unicode characters
      * represented by the string.
      */
-    class String : public VectorBase {
+    class String : public RObject {
     public:
 	/** @brief Comparison object for rho::String.
 	 *
@@ -225,6 +226,8 @@ namespace rho {
             return std::string(m_data, size());
 	}
 
+	R_xlen_t size() const { return m_size; }
+	
 	/** @brief Test for equality with a null-terminated string.
 	 *
 	 * @return true iff the strings are the same.
@@ -272,12 +275,14 @@ namespace rho {
 
 	static map* getCache();
 
+	cetype_t m_encoding;
+	bool m_ascii;
+
+	R_xlen_t m_size;
         map::value_type* m_key_val_pr;
 	const char* m_data;
-	cetype_t m_encoding;
 	mutable Symbol* m_symbol;  // Pointer to the Symbol object identified
 	  // by this String, or a null pointer if none.
-	bool m_ascii;
 
         // Should only be called by String::create().
         String(char* character_storage,
@@ -341,7 +346,9 @@ namespace rho {
     template <>
     inline GCEdge<String>::GCEdge()
     {
-	operator=(String::blank());
+	m_target = nullptr;  // In case String::blank() causes GC.
+	m_target = String::blank();
+	GCNode::incRefCount(m_target);
     }
 }  // namespace rho
 

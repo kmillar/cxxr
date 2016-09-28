@@ -28,10 +28,11 @@
  * @brief Class rho::Symbol and associated C interface.
  */
 
+#include "rho/RObject.hpp"
+
 #ifndef RSYMBOL_H
 #define RSYMBOL_H
 
-#include "rho/RObject.hpp"
 #include "rho/GCRoot.hpp"
 #include "rho/SEXP_downcast.hpp"
 #include "rho/String.hpp"
@@ -326,7 +327,7 @@ namespace rho {
      */
     inline bool isDotSymbol(const Symbol* symbol)
     {
-	return symbol && symbol->name()->c_str()[0] == '.';
+    	return symbol && symbol->name()->c_str()[0] == '.';
     }
 
     /** @brief Does Symbol's name start with '..'?
@@ -428,9 +429,9 @@ extern "C" {
      */
     inline SEXP PRINTNAME(SEXP x)
     {
-	using namespace rho;
-	const Symbol& sym = *SEXP_downcast<Symbol*>(x);
-	return const_cast<String*>(sym.name());
+    	using namespace rho;
+    	const Symbol& sym = *SEXP_downcast<Symbol*>(x);
+    	return const_cast<String*>(sym.name());
     }
 }
 

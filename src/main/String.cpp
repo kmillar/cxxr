@@ -59,15 +59,16 @@ SEXP R_BlankString = nullptr;
 
 String::String(char* character_storage,
 	       const std::string& text, cetype_t encoding, bool isAscii)
-    : VectorBase(CHARSXP, text.size()),
-      m_key_val_pr(nullptr),
+    : RObject(CHARSXP),
       m_encoding(encoding),
-      m_symbol(nullptr),
-      m_ascii(isAscii)
+      m_ascii(isAscii),
+      m_size(text.size()),
+      m_key_val_pr(nullptr),
+      m_data(character_storage),
+      m_symbol(nullptr)
 {
     memcpy(character_storage, text.data(), text.size());
     character_storage[text.size()] = '\0';  // Null terminated.
-    m_data = character_storage;
     assert(m_data);
 
     switch(m_encoding) {
@@ -188,7 +189,7 @@ String* String::obtain(const std::string& str, cetype_t encoding)
 
 unsigned int String::packGPBits() const
 {
-    unsigned int ans = VectorBase::packGPBits();
+    unsigned int ans = RObject::packGPBits();
     switch (m_encoding) {
     case CE_UTF8:
 	ans |= UTF8_MASK;
