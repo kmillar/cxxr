@@ -678,6 +678,9 @@ SEXP R_execMethod(SEXP op, SEXP rho)
     // Propagate bindings of the formal arguments of the generic to
     // newrho, but replace defaulted arguments with those appropriate
     // to the method:
+    // This differs to rematching the formals if either the argument lists match
+    // differently, or if the formals have been rebound in the calling
+    // environment.
     func->matcher()->propagateFormalBindings(callenv, newrho);
 
     /* copy the bindings of the special dispatch variables in the top
@@ -1867,6 +1870,7 @@ Rf_DispatchOrEval(const Expression* call, const BuiltInFunction* func,
 	       context; perhaps the Rf_usemethod() code should be
 	       refactored so the contexts around the Rf_usemethod() calls
 	       in this file can be removed.
+               Rf_DispatchGroup no longer uses Rf_usemethod.
 
 	       Using callenv for current and calling environment can be
 	       confusing for things like sys.parent() calls captured
