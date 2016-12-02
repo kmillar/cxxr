@@ -105,12 +105,7 @@ RObject* ArgList::evaluateSingleArgument(const RObject* arg,
 					 int arg_number) const {
     // assert(allow_missing != MissingArgHandling::Drop);
 
-    if (m_first_arg_env) {
-	RObject* value = m_first_arg;
-	m_first_arg = nullptr;
-	m_first_arg_env = nullptr;
-	return value;
-     } else if (arg && arg->sexptype() == SYMSXP) {
+    if (arg && arg->sexptype() == SYMSXP) {
 	const Symbol* sym = static_cast<const Symbol*>(arg);
 	if (sym == Symbol::missingArgument()) {
 	    if (allow_missing == MissingArgHandling::Keep)
@@ -154,24 +149,6 @@ void ArgList::merge(const ConsCell* extraargs)
     for (Xargs::const_iterator it = xargs.begin(); it != xargs.end(); ++it) {
 	last = append(it->second, it->first, last);
     }
-}
-
-pair<bool, RObject*> ArgList::firstArg(Environment* env)
-{
-    auto expanded_args = getExpandedArgs(env);
-    if (expanded_args.empty()) {
-	return pair<bool, RObject*>(false, nullptr);
-    }
-    RObject* first_arg = expanded_args.begin()->car();
-    if (m_status == EVALUATED) {
-	return make_pair(true, first_arg);
-    }
-    if (!first_arg)
-	return pair<bool, RObject*>(true, nullptr);
-
-    m_first_arg = Evaluator::evaluate(first_arg, env);
-    m_first_arg_env = env;
-    return make_pair(true, m_first_arg.get());
 }
 
 // TODO: these ought to handle '...'
@@ -230,15 +207,15 @@ bool ArgList::hasTags() const {
 void ArgList::stripTags()
 {
     for (auto& item : *mutable_list()) {
-        item.setTag(nullptr);
+	item.setTag(nullptr);
     }
 }
 
 void ArgList::erase(int pos) {
     assert(pos < size());
     if (pos == 0) {
-        m_list = mutable_list()->tail();
-        return;
+	m_list = mutable_list()->tail();
+	return;
     }
     auto prev = mutable_list()->begin();
     std::advance(prev, pos - 1);
@@ -274,13 +251,8 @@ void ArgList::wrapInPromises(Environment* env,
     for (const ConsCell& arg : expanded_args) {
 	RObject* rawvalue = arg.car();
 	const Symbol* tag = tag2Symbol(arg.tag());
-	RObject* value = Symbol::missingArgument();
-	if (m_first_arg_env) {
-	    value = Promise::createEvaluatedPromise(rawvalue, m_first_arg);
-	    m_first_arg = nullptr;
-	    m_first_arg_env = nullptr;
-	} else if (rawvalue != Symbol::missingArgument())
-	    value = new Promise(rawvalue, env);
+	RObject* value = rawvalue == Symbol::missingArgument()
+	    ? rawvalue : new Promise(rawvalue, env);
 	lastout = append(value, tag, lastout);
     }
 
@@ -292,10 +264,6 @@ void ArgList::wrapInForcedPromises(Environment* env,
 {
     assert(m_status == RAW);
     assert(evaluated_values.status() == EVALUATED);
-
-    if (m_first_arg_env) {
-	assert(m_first_arg.get() == evaluated_values.get(0));
-    }
 
     auto expanded_args = getExpandedArgs(env);
     const auto& values = *evaluated_values.list();

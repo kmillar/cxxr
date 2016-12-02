@@ -49,7 +49,7 @@ namespace rho {
      *
      * ArgList objects must be declared on the processor stack
      * (i.e. as C++ automatic variables).
-     * 
+     *
      * This class encapsulates a list of the argument supplied in a
      * call to a FunctionBase object, and provides facilities for
      * manipulating the list in the various ways required
@@ -117,7 +117,7 @@ namespace rho {
 	    friend class ArgList;
 
 	    const_iterator(ConsCell* arg, Environment* env)
-	        : m_arg(arg), m_dots(nullptr), m_env(env)
+		: m_arg(arg), m_dots(nullptr), m_env(env)
 	    {
 		if (arg && env && arg->car() == DotsSymbol)
 		    handleDots();
@@ -160,7 +160,7 @@ namespace rho {
 	ArgList(std::initializer_list<RObject*> args, Status status)
 	    : ArgList(PairList::make(args.size(), args.begin()), status) { }
 
-        explicit ArgList(const ArgList&);
+	explicit ArgList(const ArgList&);
 
 	/** @brief Evaluate the arguments in the ArgList.
 	 *
@@ -203,9 +203,7 @@ namespace rho {
 	 * has Status EVALUATED.
 	 *
 	 * @param env The Environment in which evaluations are to take
-	 *          place.  If firstArg() has previously been called
-	 *          for this ArgList, then \a env must be identical to
-	 *          the \a env argument of that firstArg() call.
+	 *          place.
 	 *
 	 * @param allow_missing This affects the handling of any
 	 *          elements of the current list whose value is either
@@ -218,9 +216,9 @@ namespace rho {
 	 * @note This function is intended within rho to supersede
 	 * CR's evalList() and evalListKeepMissing().
 	 */
-        void evaluate(Environment* env,
+	void evaluate(Environment* env,
 		      MissingArgHandling allow_missing
-		        = MissingArgHandling::Error);
+			= MissingArgHandling::Error);
 
 	/** @brief Evaluate the arguments in the ArgList.
 	 *
@@ -238,9 +236,7 @@ namespace rho {
 	 *    into the array.
 	 *
 	 * @param env The Environment in which evaluations are to take
-	 *          place.  If firstArg() has previously been called
-	 *          for this ArgList, then \a env must be identical to
-	 *          the \a env argument of that firstArg() call.
+	 *          place.
 	 *
 	 * @param num_args The length of the \a evaluated_args buffer.
 	 *         Must also match the length of the arglist.
@@ -258,70 +254,34 @@ namespace rho {
 	void evaluateToArray(Environment* env,
 			     int num_args, RObject** evaluated_args,
 			     MissingArgHandling allow_missing
-			         = MissingArgHandling::Error) const;
+				 = MissingArgHandling::Error) const;
 
-	/** @brief Get the first argument.
-	 *
-	 * This function accesses the value of the first argument in
-	 * the ArgList, evaluating it in \a env if the ArgList has not
-	 * already been evaluated.
-	 *
-	 * However, if the first argument is DotsSymbol (...), the
-	 * binding of this Symbol within \a env is examined.  If it is
-	 * bound to a DottedArgs list, the return value is the value
-	 * of the first element is this DottedArgs list, evaluated if
-	 * necessary.
-	 *
-	 * In seeking the first argument of the ArgList, the function
-	 * ignores any initial elements of the ArgList whose value is
-	 * DotsSymbol (...) if the binding of this Symbol within \a
-	 * env is NULL or Symbol::missingArgument().  Any other binding of
-	 * DotsSymbol is an error; it is also an error is a DotsSymbol
-	 * argument is encountered but DotsSymbol is unbound within \a
-	 * env.
-	 *
-	 * If evaluation of the first argument takes place, the class
-	 * records this fact, and takes steps to ensure that it is not
-	 * subsequently reevaluated.
-	 *
-	 * @param env Pointer to the Environment in which the first
-	 *          argument is to be evaluated.  If the ArgList has
-	 *          already been evaluated, this pointer can be null.
-	 *
-	 * @return If, following the procedure described above, no
-	 * first argument was found, then the first element of the
-	 * pair is false and the second element null.  Otherwise, the
-	 * first element is true and the second element is a pointer
-	 * to the value of the first argument.
+	/** @brief Return the length of the arglist.
 	 */
-	std::pair<bool, RObject*> firstArg(Environment* env);
-
-        /** @brief Return the length of the arglist.
-         */
 	size_t size() const {
 	    return listLength(list());
 	}
 
-        /** @brief Return the argument at the specified position.
-         */
-        RObject* get(int position) const;
+	/** @brief Return the argument at the specified position.
+	 */
+	RObject* get(int position) const;
 
-        /** @brief Set the argument at the specified position.
-         */
-        void set(int position, RObject* value);
+	/** @brief Set the argument at the specified position.
+	 */
+	void set(int position, RObject* value);
 
-        /** @brief Return the tag at the specified position.
-         */
-        const RObject* getTag(int position) const;
+	/** @brief Return the tag at the specified position.
+	 */
+	const RObject* getTag(int position) const;
 
-        /** @brief Set the tag at the specified position.
-         */
-        void setTag(int position, const Symbol* tag);
+	/** @brief Set the tag at the specified position.
+	 */
+	void setTag(int position, const Symbol* tag);
 
-        /** @brief Remove the argument at the specified position.  Invalidates
-         *     any existing iterators.
-         */
-        void erase(int position);
+	/** @brief Remove the argument at the specified position.  Invalidates
+	 *     any existing iterators.
+	 */
+	void erase(int position);
 
 	/** @brief Iterator through the argument list, leaving '...' unchanged.
 	 *
@@ -340,9 +300,6 @@ namespace rho {
 	 */
 	boost::iterator_range<const_iterator>
 	getExpandedArgs(Environment* env) const {
-	    if (m_first_arg_env && env != m_first_arg_env)
-		Rf_error("Internal error: first arg of ArgList"
-			 " previously evaluated in different environment");
 	    return boost::make_iterator_range(const_iterator(m_list, env),
 					      const_iterator::end(env));
 	}
@@ -361,7 +318,7 @@ namespace rho {
 	{
 	    return m_list;
 	}
-	
+
 	/** @brief Merge in new argument values..
 	 *
 	 * This function is used in implementing NextMethod.  If any
@@ -398,11 +355,11 @@ namespace rho {
 	}
 
 	/** @brief Does this arglist contain an unexpanded '...'?
-         */
-        bool has3Dots() const;
+	 */
+	bool has3Dots() const;
 
 	/** @brief Do any of the arguments have names?
-         */
+	 */
 	bool hasTags() const;
 
 	/** @brief Remove argument names.
@@ -471,10 +428,7 @@ namespace rho {
 	 * @param env Pointer to the Environment to which Promises in
 	 *          the output list are to be keyed.  As noted above,
 	 *          this parameter is ignored if the ArgList has
-	 *          Status EVALUATED.  Otherwise, if firstArg() has
-	 *          previously been called for this ArgList, then \a
-	 *          env must be identical to the \a env argument of
-	 *          that firstArg() call.
+	 *          Status EVALUATED.
 	 *
 	 * @param call The call that the arguments came from.  Ignored unless
 	 *          the ArgList has status EVALUATED.
@@ -489,28 +443,19 @@ namespace rho {
 			    const Expression* call = nullptr);
 
     private:
-        // Pointer to the argument list supplied to the constructor.
-        const PairList* const m_orig_list;
+	// Pointer to the argument list supplied to the constructor.
+	const PairList* const m_orig_list;
 
-        // The current argument list. The class code should never modify the
-        // PairList supplied as an argument to the constructor, even though the
-        // constructor casts const away when it initialises this data member.
-        GCStackRoot<PairList> m_list;
+	// The current argument list. The class code should never modify the
+	// PairList supplied as an argument to the constructor, even though the
+	// constructor casts const away when it initialises this data member.
+	GCStackRoot<PairList> m_list;
 
-        // If the first argument needed to be evaluated in a call to
-        // firstArg(), this is a pointer to the resulting value, and
-        // m_first_arg_env points to the Environment in which evaluation
-        // took place.  Both pointers are reset to null once the first
-        // argument has been processed in a subsequent call to evaluate() or
-        // converted to a promise.
-        mutable GCStackRoot<> m_first_arg;
-        mutable GCStackRoot<Environment> m_first_arg_env;
+	// wrapInPromises() defers actual promise creation, storing the promise
+	// environment here.  Promise objects are created only when needed.
+	GCStackRoot<Environment> m_promise_env;
 
-        // wrapInPromises() defers actual promise creation, storing the promise
-        // environment here.  Promise objects are created only when needed.
-        GCStackRoot<Environment> m_promise_env;
-
-        Status m_status;
+	Status m_status;
 
 	RObject* evaluateSingleArgument(const RObject* arg,
 					Environment* env,
@@ -543,7 +488,7 @@ namespace rho {
 	void wrapInForcedPromises(Environment* env,
 				  const ArgList& evaluated_values);
 
-        ArgList& operator=(const ArgList&) = delete;
+	ArgList& operator=(const ArgList&) = delete;
 
 	// Coerce a tag that is not already a Symbol into Symbol form:
 	static const Symbol* coerceTag(const RObject* tag);

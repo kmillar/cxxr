@@ -522,8 +522,8 @@ void Rf_SrcrefPrompt(const char * prefix, SEXP srcref)
 	if (TYPEOF(srcfile) == ENVSXP) {
 	    SEXP filename = Rf_findVar(Rf_install("filename"), srcfile);
 	    if (Rf_isString(filename) && length(filename)) {
-		Rprintf(_("%s at %s#%d: "), prefix, CHAR(STRING_ELT(filename, 0)), 
-			                    Rf_asInteger(srcref));
+		Rprintf(_("%s at %s#%d: "), prefix, CHAR(STRING_ELT(filename, 0)),
+					    Rf_asInteger(srcref));
 		return;
 	    }
 	}
@@ -561,7 +561,7 @@ static R_INLINE SEXP getSrcref(SEXP srcrefs, int ind)
 static void PrintCall(SEXP call, SEXP rho)
 {
     int old_bl = R_BrowseLines,
-        blines = Rf_asInteger(Rf_GetOption1(Rf_install("deparse.max.lines")));
+	blines = Rf_asInteger(Rf_GetOption1(Rf_install("deparse.max.lines")));
     if(blines != NA_INTEGER && blines > 0)
 	R_BrowseLines = blines;
     Rf_PrintValueRec(call, rho);
@@ -861,7 +861,7 @@ SEXP attribute_hidden do_if(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (asLogicalNoNA(Cond, call))
 	Stmt = CAR(CDR(args));
     else {
-	if (length(args) > 2) 
+	if (length(args) > 2)
 	   Stmt = CAR(CDR(CDR(args)));
 	else
 	   vis = 1;
@@ -974,35 +974,35 @@ SEXP attribute_hidden do_for_impl(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    break;
 
 	default:
-                switch (val_type) {
-                case LGLSXP:
-                    v = ALLOC_LOOP_VAR(v, val_type);
-                    LOGICAL(v)[0] = LOGICAL(val)[i];
-                    break;
-                case INTSXP:
-                    v = ALLOC_LOOP_VAR(v, val_type);
-                    INTEGER(v)[0] = INTEGER(val)[i];
-                    break;
-                case REALSXP:
-                    v = ALLOC_LOOP_VAR(v, val_type);
-                    REAL(v)[0] = REAL(val)[i];
-                    break;
-                case CPLXSXP:
-                    v = ALLOC_LOOP_VAR(v, val_type);
-                    COMPLEX(v)[0] = COMPLEX(val)[i];
-                    break;
-                case STRSXP:
-                    v = ALLOC_LOOP_VAR(v, val_type);
-                    SET_STRING_ELT(v, 0, STRING_ELT(val, i));
-                    break;
-                case RAWSXP:
-                    v = ALLOC_LOOP_VAR(v, val_type);
-                    RAW(v)[0] = RAW(val)[i];
-                    break;
-                default:
-                    Rf_errorcall(call, _("invalid for() loop sequence"));
-                }
-            Rf_defineVar(sym, v, rho);
+		switch (val_type) {
+		case LGLSXP:
+		    v = ALLOC_LOOP_VAR(v, val_type);
+		    LOGICAL(v)[0] = LOGICAL(val)[i];
+		    break;
+		case INTSXP:
+		    v = ALLOC_LOOP_VAR(v, val_type);
+		    INTEGER(v)[0] = INTEGER(val)[i];
+		    break;
+		case REALSXP:
+		    v = ALLOC_LOOP_VAR(v, val_type);
+		    REAL(v)[0] = REAL(val)[i];
+		    break;
+		case CPLXSXP:
+		    v = ALLOC_LOOP_VAR(v, val_type);
+		    COMPLEX(v)[0] = COMPLEX(val)[i];
+		    break;
+		case STRSXP:
+		    v = ALLOC_LOOP_VAR(v, val_type);
+		    SET_STRING_ELT(v, 0, STRING_ELT(val, i));
+		    break;
+		case RAWSXP:
+		    v = ALLOC_LOOP_VAR(v, val_type);
+		    RAW(v)[0] = RAW(val)[i];
+		    break;
+		default:
+		    Rf_errorcall(call, _("invalid for() loop sequence"));
+		}
+	    Rf_defineVar(sym, v, rho);
 	}
 	try {
 	    BailoutContext bcntxt;
@@ -1036,7 +1036,7 @@ SEXP attribute_hidden do_for_impl(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP attribute_hidden do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
-    
+
     return GCStackFrameBoundary::withStackFrameBoundary(
 	[=]() { return do_for_impl(call, op, args, rho); });
 }
@@ -1726,7 +1726,7 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    Environment::ReturnScope returnscope(working_env);
 	    try {
 		for (i = 0 ; i < n ; i++) {
-		    R_Srcref = getSrcref(srcrefs, i); 
+		    R_Srcref = getSrcref(srcrefs, i);
 		    tmp = Rf_eval(XVECTOR_ELT(expr, i), env);
 		}
 	    }
@@ -1800,7 +1800,7 @@ SEXP attribute_hidden do_recall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	Rf_error(_("'Recall' called from outside a closure"));
     Closure* closure = SEXP_downcast<Closure*>(s);
     ans = cptr->call()->invokeClosure(closure, cptr->callEnvironment(),
-                                      arglist);
+				      arglist);
     UNPROTECT(1);
     return ans;
 }
@@ -1833,8 +1833,8 @@ static bool isDefaultMethod(const Expression* call) {
 attribute_hidden
 std::pair<bool, SEXP>
 Rf_DispatchOrEval(const Expression* call, const BuiltInFunction* func,
-                  ArgList* arglist, Environment* callenv,
-                  MissingArgHandling dropmissing)
+		  ArgList* arglist, Environment* callenv,
+		  MissingArgHandling dropmissing)
 {
     // Rf_DispatchOrEval is called very frequently, most often in cases
     // where no dispatching is needed and the Rf_isObject or the
@@ -1846,7 +1846,10 @@ Rf_DispatchOrEval(const Expression* call, const BuiltInFunction* func,
     // and that there might be other arguments in the "..." as well.
     // LT
     assert(arglist->status() == ArgList::RAW);
-    GCStackRoot<> x(arglist->firstArg(callenv).second);
+    if (arglist->size() == 0)
+	return std::make_pair(false, nullptr);
+
+    GCStackRoot<> x(Evaluator::evaluate(arglist->get(0), callenv));
 
     // try to dispatch on the object
     if (x && x->hasClass()) {
@@ -1854,23 +1857,26 @@ Rf_DispatchOrEval(const Expression* call, const BuiltInFunction* func,
 	if (x->isS4Object() && R_has_methods(func)) {
 	    // create a promise to pass down to applyClosure
 	    arglist->wrapInPromises(callenv, call);
+	    SET_PRVALUE(arglist->get(0), x);
 
 	    /* This means S4 dispatch */
-            auto pr = R_possible_dispatch(call, func, *arglist, callenv);
+	    auto pr = R_possible_dispatch(call, func, *arglist, callenv);
 	    if (pr.first) {
-                return pr;
+		return pr;
 	    }
 	}
 	if (!isDefaultMethod(call)) {
-	    if (arglist->status() != ArgList::PROMISED)
+	    if (arglist->status() != ArgList::PROMISED) {
 		arglist->wrapInPromises(callenv, call);
+		SET_PRVALUE(arglist->get(0), x);
+	    }
 	    /* The context set up here is needed because of the way
 	       Rf_usemethod() is written.  Rf_DispatchGroup() repeats some
 	       internal Rf_usemethod() code and avoids the need for a
 	       context; perhaps the Rf_usemethod() code should be
 	       refactored so the contexts around the Rf_usemethod() calls
 	       in this file can be removed.
-               Rf_DispatchGroup no longer uses Rf_usemethod.
+	       Rf_DispatchGroup no longer uses Rf_usemethod.
 
 	       Using callenv for current and calling environment can be
 	       confusing for things like sys.parent() calls captured
@@ -1884,21 +1890,31 @@ Rf_DispatchOrEval(const Expression* call, const BuiltInFunction* func,
 	    Environment* working_env = new Environment(callenv, frame);
 	    ClosureContext cntxt(call, callenv, func, working_env);
 	    const char* generic = func->name();
-            auto dispatched = Rf_usemethod(generic, x, call,
-                                           working_env, callenv,
-                                           Environment::base());
+	    auto dispatched = Rf_usemethod(generic, x, call,
+					   working_env, callenv,
+					   Environment::base());
 	    if (dispatched.first)
-                return dispatched;
+		return dispatched;
 	}
     }
-    arglist->evaluate(callenv, dropmissing);
+    // Evaluate the args.  We need to avoid double-evaluating the first
+    // argument.
+    if (arglist->get(0) == R_DotsSymbol) {
+	arglist->wrapInPromises(callenv, call);
+	SET_PRVALUE(arglist->get(0), x);
+	arglist->evaluate(callenv, dropmissing);
+    } else {
+	arglist->set(0, R_NilValue);
+	arglist->evaluate(callenv, dropmissing);
+	arglist->set(0, x);
+    }
     return std::make_pair(false, nullptr);
 }
 
 attribute_hidden
 std::pair<bool, SEXP>
 Rf_Dispatch(const Expression* call, const BuiltInFunction* func,
-            const ArgList& arglist, Environment* callenv)
+	    const ArgList& arglist, Environment* callenv)
 {
     assert(arglist.status() == ArgList::EVALUATED);
     GCStackRoot<> x(arglist.get(0));
@@ -1908,27 +1924,27 @@ Rf_Dispatch(const Expression* call, const BuiltInFunction* func,
 	// Try for formal method.
 	if (x->isS4Object() && R_has_methods(func)) {
 	    // create a promise to pass down to applyClosure
-            ArgList promises(arglist);
-            promises.wrapInPromises(callenv, call);
+	    ArgList promises(arglist);
+	    promises.wrapInPromises(callenv, call);
 
 	    /* This means S4 dispatch */
-            auto pr = R_possible_dispatch(call, func, promises, callenv);
+	    auto pr = R_possible_dispatch(call, func, promises, callenv);
 	    if (pr.first) {
-                return pr;
+		return pr;
 	    }
 	}
 	if (!isDefaultMethod(call)) {
-            ArgList promises(arglist);
-            promises.wrapInPromises(callenv, call);
+	    ArgList promises(arglist);
+	    promises.wrapInPromises(callenv, call);
 	    GCStackRoot<Frame> frame(Frame::closureWorkingFrame(promises));
 	    Environment* working_env = new Environment(callenv, frame);
 	    ClosureContext cntxt(call, callenv, func, working_env);
 	    const char* generic = func->name();
-            auto dispatched = Rf_usemethod(generic, x, call,
-                                           working_env, callenv,
-                                           Environment::base());
+	    auto dispatched = Rf_usemethod(generic, x, call,
+					   working_env, callenv,
+					   Environment::base());
 	    if (dispatched.first)
-                return dispatched;
+		return dispatched;
 	}
     }
     return std::make_pair(false, nullptr);
@@ -1938,11 +1954,11 @@ attribute_hidden
 int Rf_DispatchGroup(const char* group, SEXP call, SEXP op, SEXP args, SEXP rho,
 		     SEXP *ans) {
   auto result = Rf_DispatchGroup(group,
-                                 SEXP_downcast<Expression*>(call),
-                                 SEXP_downcast<BuiltInFunction*>(op),
-                                 ArgList(SEXP_downcast<PairList*>(args),
-                                         ArgList::EVALUATED),
-                                 SEXP_downcast<Environment*>(rho));
+				 SEXP_downcast<Expression*>(call),
+				 SEXP_downcast<BuiltInFunction*>(op),
+				 ArgList(SEXP_downcast<PairList*>(args),
+					 ArgList::EVALUATED),
+				 SEXP_downcast<Environment*>(rho));
   if (result.first)
       *ans = result.second;
   return result.first;
@@ -1952,9 +1968,9 @@ int Rf_DispatchGroup(const char* group, SEXP call, SEXP op, SEXP args, SEXP rho,
 attribute_hidden
 std::pair<bool, SEXP>
 Rf_DispatchGroup(const char *group, const Expression* call,
-                 const BuiltInFunction* op,
-                 ArgList&& args,
-                 Environment* callenv)
+		 const BuiltInFunction* op,
+		 ArgList&& args,
+		 Environment* callenv)
 {
     assert(group != nullptr);
 
@@ -1972,7 +1988,7 @@ Rf_DispatchGroup(const char *group, const Expression* call,
        below */
     if (!((arg1val && arg1val->hasClass())
 	  || (arg2val && arg2val->hasClass())))
-        return std::make_pair(false, nullptr);
+	return std::make_pair(false, nullptr);
 
     bool isOps = (strcmp(group, "Ops") == 0);
 
@@ -1980,12 +1996,12 @@ Rf_DispatchGroup(const char *group, const Expression* call,
     bool useS4 = ((arg1val && arg1val->isS4Object())
 		  || (arg2val && arg2val->isS4Object()));
     if (useS4 && R_has_methods(op)) {
-        /* Remove argument names to ensure positional matching */
-        if (isOps)
-            args.stripTags();
-        auto dispatched = R_possible_dispatch(call, op, args, callenv);
-        if (dispatched.first) {
-          return dispatched;
+	/* Remove argument names to ensure positional matching */
+	if (isOps)
+	    args.stripTags();
+	auto dispatched = R_possible_dispatch(call, op, args, callenv);
+	if (dispatched.first) {
+	  return dispatched;
 	}
 	/* else go on to look for S3 methods */
     }
@@ -2005,12 +2021,12 @@ Rf_DispatchGroup(const char *group, const Expression* call,
 	&& Rf_isBasicClass(Rf_translateChar(l->className()))) {
 	/* This and the similar test below implement the strategy
 	 for S3 methods selected for S4 objects.  See ?Methods */
-        RObject* value = arg1val;
+	RObject* value = arg1val;
 	if (NAMED(value))
 	    SET_NAMED(value, 2);
 	value = R_getS4DataSlot(value, S4SXP); /* the .S3Class obj. or NULL*/
 	if (value) { /* use the S3Part as the inherited object */
-            args.set(0, value);
+	    args.set(0, value);
 	    arg1val = value;
 	}
     }
@@ -2021,19 +2037,19 @@ Rf_DispatchGroup(const char *group, const Expression* call,
 			       callenv, Environment::base(), false);
     if (r && arg2val->isS4Object() && r->locInClasses() > 0
 	&& Rf_isBasicClass(Rf_translateChar(r->className()))) {
-        RObject* value = arg2val;
+	RObject* value = arg2val;
 	if(NAMED(value))
 	    SET_NAMED(value, 2);
 	value = R_getS4DataSlot(value, S4SXP);
 	if (value) {
-            args.set(1, value);
+	    args.set(1, value);
 	    arg2val = value;
 	}
     }
 
     if (!l && !r) {
-        /* no generic or group method so use default*/
-        return std::make_pair(0, nullptr);
+	/* no generic or group method so use default*/
+	return std::make_pair(0, nullptr);
     }
 
     if (l && r && l->function() != r->function()) {
@@ -2077,13 +2093,13 @@ Rf_DispatchGroup(const char *group, const Expression* call,
     {
 	GCStackRoot<Expression>
 	    newcall(new Expression(m->symbol(),
-                                   const_cast<PairList*>(call->tail())));
+				   const_cast<PairList*>(call->tail())));
 	// Ensure positional matching for operators:
 	if (isOps)
-            args.stripTags();
+	    args.stripTags();
 	Closure* func = SEXP_downcast<Closure*>(m->function());
 	auto ans = newcall->invokeClosure(func, callenv, args, supp_frame);
-        return std::make_pair(true, ans);
+	return std::make_pair(true, ans);
     }
 }
 
