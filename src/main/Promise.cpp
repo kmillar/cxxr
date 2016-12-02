@@ -85,7 +85,7 @@ void PromiseData::detachReferents()
 RObject* PromiseData::evaluate()
 {
     if (m_is_pointer_to_promise) {
-        return getThis()->evaluate();
+	return getThis()->evaluate();
     }
     if (m_value == Symbol::unboundValue()) {
 	// Force promise:
@@ -118,13 +118,13 @@ RObject* PromiseData::evaluate()
 bool PromiseData::isMissingSymbol() const
 {
     if (m_is_pointer_to_promise) {
-        return getThis()->isMissingSymbol();
+	return getThis()->isMissingSymbol();
     }
 
     bool ans = false;
     /* This is wrong but I'm not clear why - arr
     if (m_value == Symbol::missingArgument())
-     	return true;
+	return true;
     */
     if (m_value == Symbol::unboundValue() && m_valgen) {
 	const RObject* prexpr = m_valgen;
@@ -161,6 +161,10 @@ void PromiseData::setValue(RObject* val)
 const char* Promise::typeName() const
 {
     return staticTypeName();
+}
+
+Environment* Promise::environment_full() const {
+    return m_data->m_environment;
 }
 
 void PromiseData::visitReferents(GCNode::const_visitor* v) const

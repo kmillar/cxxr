@@ -35,12 +35,11 @@
 
 #include "rho/GCRoot.hpp"
 #include "rho/SEXP_downcast.hpp"
+#include "rho/String.hpp"
 
 extern "C" void Rf_InitNames();
 
 namespace rho {
-    class String;
-
     /** @brief Class used to represent R symbols.
      *
      * A Symbol is an R identifier.  Each Symbol (except for
@@ -90,16 +89,16 @@ namespace rho {
 	 *
 	 * This is used in BuiltInSize() and BuiltInNames().
 	 */
-        typedef Table::const_iterator const_iterator;
+	typedef Table::const_iterator const_iterator;
 
 	static const_iterator begin()
 	{
-            return getTable()->begin();
+	    return getTable()->begin();
 	}
 
 	static const_iterator end()
 	{
-            return getTable()->end();
+	    return getTable()->end();
 	}
 
 	/** @brief Index of a double-dot symbol.
@@ -128,23 +127,23 @@ namespace rho {
 
 	/** @brief Is this a special symbol?
 	 *
-         * Special symbols are symbols that get special lookup optimizations.
-         * Environments on the function call stack that
-         * have never contained such a symbol are marked as such, so they can
-         * be quickly skipped when searching for a function named by such a
-         * special symbol.
-         *
-         * In principle, any symbol could be marked as special, but ones that
-         * contain special characters, or are reserved words, are the ones
-         * unlikely to be defined in any environment other than base, and hence
-         * the ones where this is most likely to help.
-         *
+	 * Special symbols are symbols that get special lookup optimizations.
+	 * Environments on the function call stack that
+	 * have never contained such a symbol are marked as such, so they can
+	 * be quickly skipped when searching for a function named by such a
+	 * special symbol.
+	 *
+	 * In principle, any symbol could be marked as special, but ones that
+	 * contain special characters, or are reserved words, are the ones
+	 * unlikely to be defined in any environment other than base, and hence
+	 * the ones where this is most likely to help.
+	 *
 	 * @return true iff this symbol is marked as a special symbol.
 	 */
-        bool isSpecialSymbol() const
-        {
-          return m_is_special_symbol;
-        }
+	bool isSpecialSymbol() const
+	{
+	  return m_is_special_symbol;
+	}
 
 	/** @brief Missing argument.
 	 *
@@ -221,13 +220,13 @@ namespace rho {
 	 * pointer to the existing Symbol will be returned.
 	 *
 	 * @param className The name of the class that the method is for.
-         * @param methodName The name of the function that the method is for.
+	 * @param methodName The name of the function that the method is for.
 	 *
 	 * @return Pointer to a Symbol (preexisting or newly
 	 * created) with the required signature.
 	 */
-        static Symbol* obtainS3Signature(const char* className,
-                                         const char* methodName);
+	static Symbol* obtainS3Signature(const char* className,
+					 const char* methodName);
 
 	/** @brief The name by which this type is known in R.
 	 *
@@ -254,15 +253,15 @@ namespace rho {
 	// Virtual function of GCNode:
 	void visitReferents(const_visitor* v) const override;
 
-        /** @brief Return a symbol object that has no name.
-         *
-         *  An unnamed symbol is useful in places where an illegal symbol is
-         *  useful.  Examples are missing arguments and unbound values.
-         *
-         *  Note that unlike other symbols, unnamed symbols are not
-         *  automatically protected from garbage collection.
-         */
-        static Symbol* createUnnamedSymbol();
+	/** @brief Return a symbol object that has no name.
+	 *
+	 *  An unnamed symbol is useful in places where an illegal symbol is
+	 *  useful.  Examples are missing arguments and unbound values.
+	 *
+	 *  Note that unlike other symbols, unnamed symbols are not
+	 *  automatically protected from garbage collection.
+	 */
+	static Symbol* createUnnamedSymbol();
     protected:
 	// Virtual function of GCNode:
 	void detachReferents() override;
@@ -275,7 +274,7 @@ namespace rho {
 	GCEdge<const String> m_name;
 
 	unsigned int m_dd_index : 31;
-        bool m_is_special_symbol : 1;
+	bool m_is_special_symbol : 1;
 	enum S11nType {NORMAL = 0, MISSINGARG, UNBOUNDVALUE};
 
 	/**
@@ -286,7 +285,7 @@ namespace rho {
 	 *          constructed relates to an element of a
 	 *          <tt>...</tt> argument list.  A null pointer
 	 *          signifies a psuedo-symbol, which is not entered
-         *          into the table.
+	 *          into the table.
 	 */
 	explicit Symbol(const String* name);
 
@@ -301,9 +300,9 @@ namespace rho {
 
 	// Initialize the static data members:
 	static void initialize();
-        friend void ::Rf_InitNames();
+	friend void ::Rf_InitNames();
 
-        static const char* s_special_symbol_names[];
+	static const char* s_special_symbol_names[];
 
 	// Precondition: there is not already a Symbol identified by
 	// 'name'.
@@ -406,7 +405,7 @@ extern "C" {
      * @param s Pointer to a rho::RObject.
      *
      * @return TRUE iff s points to a rho::RObject with ::SEXPTYPE
-     *         SYMSXP. 
+     *         SYMSXP.
      */
     inline Rboolean Rf_isSymbol(SEXP s)
     {

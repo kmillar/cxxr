@@ -77,17 +77,21 @@ namespace rho {
 	/** @brief Copy constructor.
 	 *
 	 * @param source GCEdge to be copied.  The constructed GCEdge
-	 * will point to the same object (if any) as \a source. 
+	 * will point to the same object (if any) as \a source.
 	 */
 	GCEdge(const GCEdge<T>& source)
 	    : m_target(source.m_target)
 	{
-	    static_assert(sizeof(T) >= 0, "T must be a complete type");
 	    GCNode::incRefCount(m_target);
 	}
 
+	GCEdge(GCEdge<T>&& source)
+	    : m_target(source.m_target)
+	{
+	    source.m_target = nullptr;
+	}
+
 	~GCEdge() {
-	    check_complete_type();
 	    GCNode::decRefCount(m_target);
 	}
 
@@ -97,8 +101,17 @@ namespace rho {
 	    return *this;
 	}
 
+	GCEdge<T>& operator=(GCEdge<T>&& source)
+	{
+	    GCNode::decRefCount(m_target);
+	    m_target = source.m_target;
+	    source.m_target = nullptr;
+	    return *this;
+	}
+
 	GCEdge<T>& operator=(T* newtarget)
 	{
+	    check_complete_type();
 	    retarget(newtarget);
 	    return *this;
 	}
@@ -117,34 +130,41 @@ namespace rho {
 	    return get();
 	}
 
+	explicit operator bool() const {
+	    return m_target;
+	}
+
 	/** @brief Access the target pointer.
 	 *
 	 * @return pointer to the current target (if any) of the edge.
 	 */
 	T* get() const
 	{
-	    return m_target;
+	    check_complete_type();
+	    return static_cast<T*>(m_target);
 	}
 
 	void detach() {
-	    check_complete_type();
 	    GCNode::decRefCount(m_target);
 	    m_target = nullptr;
 	}
 
     private:
-	T* m_target;
+	typedef typename std::conditional<std::is_const<T>::value,
+					  const GCNode,
+					  GCNode>::type GCNodeType;
+	GCNodeType* m_target;
 
 	/** @brief Redirect the GCEdge to point at a (possibly) different node.
-         *
-         * @param newtarget Pointer to the object to which reference is now
-         *           to be made.
-         */
+	 *
+	 * @param newtarget Pointer to the object to which reference is now
+	 *           to be made.
+	 */
 	void retarget(T* newtarget)
 	{
 	    check_complete_type();
 	    GCNode::incRefCount(newtarget);
-	    T* oldtarget = m_target;
+	    GCNodeType* oldtarget = m_target;
 	    m_target = newtarget;
 	    GCNode::decRefCount(oldtarget);
 	}
@@ -190,12 +210,12 @@ namespace rho {
 	    }
 	};
 
-        template<typename T>
+	template<typename T>
 	struct IsGCEdge : public std::false_type {};
 
-        template<typename T>
+	template<typename T>
 	struct IsGCEdge<GCEdge<T>> : public std::true_type {};
-    
+
     }  // namespace ElementTraits
 } // namespace rho
 
