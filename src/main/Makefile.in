@@ -1,14 +1,14 @@
 # $Id$
-# 
+#
 # This file is part of Rho, a project to refactor the R interpreter
 # into C++.  It may consist in whole or in part of program code and
 # documentation taken from the R project itself, incorporated into
 # Rho (and possibly MODIFIED) under the terms of the GNU General Public
 # Licence.
-# 
+#
 # Rho is Copyright (C) 2008-14 Andrew R. Runnalls, subject to such other
 # copyrights and copyright restrictions as may be stated below.
-# 
+#
 # Rho is not part of the R project, and bugs and other issues should
 # not be reported via r-bugs or other R project channels; instead refer
 # to the Rho website.
@@ -32,7 +32,7 @@ SOURCES_C = complex.c inlined.c radixsort.c \
 
 SOURCES_CXX = \
 	AllocationTable.cpp AllocatorSuperblock.cpp allocstats.cpp \
-	ArgList.cpp ArgMatcher.cpp \
+	Argument.cpp ArgList.cpp ArgMatcher.cpp \
 	BinaryFunction.cpp Browser.cpp BuiltInFunction.cpp \
 	CellPool.cpp Closure.cpp \
 	ClosureContext.cpp CommandChronicle.cpp CommandLineArgs.cpp \
@@ -92,10 +92,10 @@ EXTRA_SOURCES_CXX = \
 	Rmain.cpp alloca.cpp mkdtemp.cpp strdup.cpp strncasecmp.cpp
 
 DEPENDS = $(SOURCES_C:.c=.d) $(SOURCES_CXX:.cpp=.d) \
-          $(EXTRA_SOURCES_CXX:.cpp=.d)
+	  $(EXTRA_SOURCES_CXX:.cpp=.d)
 SOURCES = $(SOURCES_C) $(SOURCES_CXX) $(SOURCES_F)
 OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o) $(SOURCES_F:.f=.o) \
-          @LIBOBJS@ @ALLOCA@
+	  @LIBOBJS@ @ALLOCA@
 HEADERS = \
 	RBufferUtils.h Rstrptime.h \
 	arithmetic.h \
@@ -115,7 +115,7 @@ HEADERS = \
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = Makefile.in Makefile.win \
 	$(HEADERS) \
-        $(SOURCES_C) \
+	$(SOURCES_C) \
 	$(SOURCES_CXX) \
 	$(EXTRA_SOURCES_CXX) \
 	$(SOURCES_F) \
@@ -182,7 +182,7 @@ Makedeps: Makefile $(DEPENDS)
 	@touch $@
 
 ## This target has been changed to ensure that R.bin and libR get
-## installed in the build tree if necessary, even if the corresponding 
+## installed in the build tree if necessary, even if the corresponding
 ## objects are not re-made.
 ## Note that dependencies in the test Makefiles used to depend on these objects,
 ## so copy-if-change is used.

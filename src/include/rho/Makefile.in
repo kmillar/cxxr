@@ -1,14 +1,14 @@
 # $Id$
-# 
+#
 # This file is part of Rho, a project to refactor the R interpreter
 # into C++.  It may consist in whole or in part of program code and
 # documentation taken from the R project itself, incorporated into
 # Rho (and possibly MODIFIED) under the terms of the GNU General Public
 # Licence.
-# 
+#
 # Rho is Copyright (C) 2008-14 Andrew R. Runnalls, subject to such other
 # copyrights and copyright restrictions as may be stated below.
-# 
+#
 # Rho is not part of the R project, and bugs and other issues should
 # not be reported via r-bugs or other R project channels; instead refer
 # to the Rho website.
@@ -28,7 +28,8 @@ include $(top_builddir)/Makeconf
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 
 RHO_HPPS = \
-  AddressSanitizer.hpp Allocator.hpp ArgList.hpp ArgMatcher.hpp BinaryFunction.hpp \
+  AddressSanitizer.hpp Allocator.hpp Argument.hpp ArgList.hpp ArgMatcher.hpp \
+  BinaryFunction.hpp \
   BuiltInFunction.hpp CellPool.hpp Closure.hpp CommandChronicle.hpp Complex.hpp \
   ComplexVector.hpp ConsCell.hpp \
   DotInternal.hpp \
@@ -60,7 +61,7 @@ DISTCLEANFILES = Makefile config.hpp
 .SUFFIXES:
 .SUFFIXES: .hpp .ts
 
-.hpp.ts: 
+.hpp.ts:
 	@$(INSTALL_DATA) $< $(top_builddir)/include/rho/`basename $<`
 	@touch $@
 
@@ -70,7 +71,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 R: Makefile stamp-R $(TIMESTAMPS)
-stamp-R: 
+stamp-R:
 	@$(MKINSTALLDIRS) $(top_builddir)/include/rho
 	@touch $@
 $(TIMESTAMPS): stamp-R
