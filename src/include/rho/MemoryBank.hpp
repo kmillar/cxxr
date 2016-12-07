@@ -39,7 +39,7 @@
 
 namespace rho {
     /** @brief Class to manage memory allocation and deallocation for rho.
-     * 
+     *
      * Small objects are quickly allocated from pools of various cell
      * sizes; large objects are obtained directly from the main heap.
      */
@@ -108,6 +108,19 @@ namespace rho {
 	 */
 	static void defragment();
 
+
+	/** @brief Adjust the freed block statistics.
+	 *
+	 * This should be used when the entire size of a freed block is not
+	 * passed to the delete operator, causing inconsistent statistics for
+	 * free counts.
+	 *
+	 * @param original The previously logged freed block size.
+	 *
+	 * @param actual The actual size of the freed block.
+	 */
+	static void adjustFreedSize(size_t original, size_t actual);
+
 #ifdef R_MEMORY_PROFILING
 	/** Set a callback to monitor allocations exceeding a threshold size.
 	 *
@@ -148,22 +161,8 @@ namespace rho {
 
 	static void notifyDeallocation(size_t bytes);
 
-	friend class String;
-	template<typename, SEXPTYPE>
+	template<typename T, SEXPTYPE ST>
 	friend class FixedVector;
-
-        /** @brief Adjust the freed block statistics.
-         *
-         * This should be used when the entire size of a freed block is not
-         * passed to the delete operator, causing inconsistent statistics for
-         * free counts.
-         *
-         * @param original The previously logged freed block size.
-         *
-         * @param actual The actual size of the freed block.
-         */
-	static void adjustFreedSize(size_t original, size_t actual);
-
 	static void adjustBytesAllocated(size_t bytes) {
 	    s_bytes_allocated += bytes;
 	}

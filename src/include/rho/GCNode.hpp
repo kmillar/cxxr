@@ -61,7 +61,7 @@
  * immediately).
  *
  * A backup mark-sweep garbage collection is used to handle reference cycles
- * and objects whose reference counts have saturated. 
+ * and objects whose reference counts have saturated.
  * TODO(kmillar): implement cycle breaking for unevaluated default promises.
  * TODO(kmillar): implement cycle breaking for closures.
  */
@@ -125,14 +125,14 @@ namespace rho {
 	};
 
 	GCNode()
-            : m_refcount_flags(s_mark | s_moribund_mask)
+	    : m_refcount_flags(s_mark | s_moribund_mask)
 	{
 	    ++s_num_nodes;
 	    s_moribund->push_back(this);
 	}
 
 	/** @brief Allocate memory.
-         *
+	 *
 	 * Allocates memory for a new object of a class derived from
 	 * GCNode.
 	 *
@@ -313,7 +313,7 @@ namespace rho {
 	static const unsigned char s_on_stack_mask = 0x1;
 
 	mutable unsigned char m_refcount_flags;
-          // Refcount + moribund/marked/on_stack flags.  The least
+	  // Refcount + moribund/marked/on_stack flags.  The least
 	  // significant bit is set if a pointer to this object is
 	  // known to be on the stack.
 	  // The reference count is held in the next 5
@@ -378,11 +378,11 @@ namespace rho {
 	void clearOnStackBit() const {
 	    m_refcount_flags = m_refcount_flags & static_cast<unsigned char>(~s_on_stack_mask);
 	    if ((m_refcount_flags & (s_refcount_mask | s_moribund_mask)) == 0) {
-                // Clearing stack bits only happens when removing a stack barrier, so
-                // the object still exists on the stack and we can only add it to the
-                // moribund list here.
-                addToMoribundList();
-            }
+		// Clearing stack bits only happens when removing a stack barrier, so
+		// the object still exists on the stack and we can only add it to the
+		// moribund list here.
+		addToMoribundList();
+	    }
 	}
 
 	bool isOnStackBitSet() const {
@@ -424,7 +424,7 @@ namespace rho {
 	}
 
 	/** @brief Mark this node as moribund or delete if the stack bit is correct.
-         */
+	 */
 	void makeMoribund() const HOT_FUNCTION;
 
 	void addToMoribundList() const HOT_FUNCTION;
@@ -454,6 +454,46 @@ namespace rho {
      * second and subsequent calls do nothing.
      */
     void initializeMemorySubsystem();
+
+/**
+ * @brief Visit an object, or call its visitReferents() function if possible.
+ *
+ * If \a object is convertible to GCNode*, then this function calls (*v)(object).
+ * Otherwise, if \a object has a visitReferents() function, then this calls
+ * object.visitReferents(v).
+ * In all other cases, this does nothing.
+ */
+// GCNode variant.
+inline void visitObjectOrReferents(const GCNode* object, GCNode::const_visitor* v) {
+    (*v)(object);
+}
+
+namespace internal {
+
+// Variant with a visitReferents function.
+template<typename T>
+auto visitObjectOrReferents(const T& object, GCNode::const_visitor* v, int)
+    -> typename std::enable_if<
+	std::is_same<decltype(object.visitReferents(v)), void>
+	    ::value>::type
+{
+    object.visitReferents(v);
+}
+
+
+// Do nothing case.
+template<typename T>
+void visitObjectOrReferents(const T& object, GCNode::const_visitor* v, long)
+{ }
+
+}
+
+template<typename T>
+void visitObjectOrReferents(const T& object, GCNode::const_visitor* v)
+{
+    internal::visitObjectOrReferents(object, v, 0);
+}
+
 }  // namespace rho
 
 #endif /* GCNODE_HPP */
