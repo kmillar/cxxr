@@ -32,6 +32,9 @@
 #ifndef RHO_ADDRESS_SANITIZER_H
 #define RHO_ADDRESS_SANITIZER_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -55,6 +58,13 @@ void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
 
 #  define NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
 
+// These aren't part of the ASAN API, but rho functions that hack into ASAN
+// internals.
+typedef uint32_t StackTraceHandle;
+StackTraceHandle __asan_store_stacktrace();
+void __asan_print_stacktrace(StackTraceHandle trace_id);
+
+#  define STACKTRACES , allocation_trace, free_trace
 #else  // ! HAVE_ASAN
 
 #  define ASAN_POISON_MEMORY_REGION(addr, size) \
@@ -63,6 +73,7 @@ void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
   ((void)(addr), (void)(size))
 
 #  define NO_SANITIZE_ADDRESS
+#  define STACKTRACES
 
 #endif
 

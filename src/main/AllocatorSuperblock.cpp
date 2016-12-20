@@ -169,7 +169,12 @@ void* rho::AllocatorSuperblock::allocateNextUntouched() {
   return result;
 }
 
-void rho::AllocatorSuperblock::freeBlock(void* pointer) {
+void rho::AllocatorSuperblock::freeBlock(void* pointer
+#ifdef HAVE_ADDRESS_SANITIZER
+                                         , StackTraceHandle allocation_trace,
+                                         StackTraceHandle free_trace
+#endif
+                                         ) {
   uintptr_t block = reinterpret_cast<uintptr_t>(pointer);
   uintptr_t first_block = firstBlockPointer();
   unsigned index = (block - first_block) / blockSize();
@@ -178,7 +183,7 @@ void rho::AllocatorSuperblock::freeBlock(void* pointer) {
   tagBlockUnallocated(index);
 
   // Use the block as a free list node and prepend to the free list.
-  FreeListNode* free_node = new (pointer)FreeListNode(this, index);
+  FreeListNode* free_node = new (pointer)FreeListNode(this, index STACKTRACES);
   GCNodeAllocator::addToFreelist(free_node, m_size_class);
 }
 

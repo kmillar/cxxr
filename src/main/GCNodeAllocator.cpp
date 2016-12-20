@@ -246,6 +246,10 @@ void* rho::GCNodeAllocator::allocate(size_t bytes) {
   // grew the allocation larger than the requested size.
   // The additional size (actual_bytes - bytes) is added to the default
   // redzone size.
+
+  // store stack trace data in the redzone.
+  *(StackTraceHandle*) result = __asan_store_stacktrace();
+
   void* end_redzone = offsetPointer(result, bytes - s_redzone_size);
   unsigned end_redzone_size = s_redzone_size + (actual_bytes - bytes);
   ASAN_POISON_MEMORY_REGION(result, s_redzone_size);
@@ -264,6 +268,10 @@ void rho::GCNodeAllocator::free(void* pointer) {
 
   // Unpoison the first redzone so we can link it into a freelist.
   ASAN_UNPOISON_MEMORY_REGION(pointer, sizeof(FreeListNode));
+
+  // Grab the stack traces.
+  StackTraceHandle allocation_trace = *(StackTraceHandle*) pointer;
+  StackTraceHandle free_trace = __asan_store_stacktrace();
 #endif
 #ifdef ALLOCATION_CHECK
   if (!lookupPointer(pointer)) {
@@ -275,7 +283,7 @@ void rho::GCNodeAllocator::free(void* pointer) {
   AllocatorSuperblock* superblock =
       AllocatorSuperblock::arenaSuperblockFromPointer(pointer_uint);
   if (superblock) {
-    superblock->freeBlock(pointer);
+    superblock->freeBlock(pointer STACKTRACES);
   } else {
     // Search for the allocation in the hashtable.  If the allocation is in a
     // superblock, the superblock is left as is but the superblock bitset is
@@ -290,13 +298,13 @@ void rho::GCNodeAllocator::free(void* pointer) {
     }
     if (allocation->isSuperblock()) {
       AllocatorSuperblock* superblock = allocation->asSuperblock();
-      superblock->freeBlock(pointer);
+      superblock->freeBlock(pointer STACKTRACES);
       // Done. Don't erase hash entries for the superblock.
     } else if (allocation->asPointer() == pointer) {
       // Erase all entries in hashtable for the allocation.
       s_alloctable->erase(pointer_uint, allocation->sizeLog2());
       // Add allocation to free list.
-      addLargeAllocationToFreelist(pointer, allocation->sizeClass());
+      addLargeAllocationToFreelist(pointer, allocation->sizeClass() STACKTRACES);
     } else {
       allocerr("failed to free pointer - unallocated or double-free problem");
     }
@@ -352,11 +360,21 @@ rho::GCNode* rho::GCNodeAllocator::lookupPointer(void* candidate) {
   return static_cast<GCNode*>(result);
 }
 
-void rho::GCNodeAllocator::addLargeAllocationToFreelist(void* pointer,
-    unsigned size_class) {
+#ifdef HAVE_ADDRESS_SANITIZER
+void rho::GCNodeAllocator::addLargeAllocationToFreelist(
+    void* pointer, unsigned size_class,
+    StackTraceHandle allocation_trace, StackTraceHandle free_trace) {
+  FreeListNode* free_node = new (pointer)FreeListNode(allocation_trace,
+                                                      free_trace);
+  addToFreelist(free_node, size_class);
+}
+#else
+void rho::GCNodeAllocator::addLargeAllocationToFreelist(
+    void* pointer, unsigned size_class) {
   FreeListNode* free_node = new (pointer)FreeListNode();
   addToFreelist(free_node, size_class);
 }
+#endif
 
 void rho::GCNodeAllocator::addToFreelist(FreeListNode* free_node,
     unsigned size_class) {
@@ -536,5 +554,20 @@ void rho::GCNodeAllocator::clearQuarantineBySizeClass(int size_class) {
   }
 }
 
-#endif // HAVE_ADDRESS_SANITIZER
+void rho::GCNodeAllocator::printStackTracesForFreedMemory(GCNode* node) {
+  void* pointer = node;
 
+  // Adjust for redzone to find the true start of the allocation.
+  pointer = offsetPointer(pointer, -s_redzone_size);
+
+  // Unpoison the memory so we can access it.
+  ASAN_UNPOISON_MEMORY_REGION(pointer, sizeof(FreeListNode));
+
+  FreeListNode* list_node = static_cast<FreeListNode*>(pointer);
+  printf("Memory allocated at:\n");
+  __asan_print_stacktrace(list_node->m_allocation_trace);
+  printf("\n\nAnd freed at:\n");
+  __asan_print_stacktrace(list_node->m_freed_trace);
+}
+
+#endif // HAVE_ADDRESS_SANITIZER

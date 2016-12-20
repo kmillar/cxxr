@@ -52,14 +52,28 @@ class GCNodeAllocator;
 class FreeListNode
 {
 public:
+#ifdef HAVE_ADDRESS_SANITIZER
+  FreeListNode(StackTraceHandle allocated, StackTraceHandle freed) :
+      m_superblock(nullptr), m_allocation_trace(allocated), m_freed_trace(freed)
+  { }
+
+  FreeListNode(AllocatorSuperblock* superblock, unsigned block,
+               StackTraceHandle allocated, StackTraceHandle freed) :
+      FreeListNode(allocated, freed)
+  {
+    m_superblock = superblock;
+    m_block = block;
+  }
+#else
   FreeListNode() :
       m_superblock(nullptr) { }
 
   FreeListNode(AllocatorSuperblock* superblock, unsigned block) :
       m_superblock(superblock),
       m_block(block) { }
+#endif
 
-private:
+ private:
   friend GCNodeAllocator;
 
   /** Link to the next node in this freelist. */
@@ -77,6 +91,12 @@ private:
    * allocation is reclaimed from a freelist.
    */
   std::uint32_t m_block;
+
+#ifdef HAVE_ADDRESS_SANITIZER
+ public:
+  StackTraceHandle m_allocation_trace;
+  StackTraceHandle m_freed_trace;
+#endif
 };
 
 /** @brief An allocator for allocating and iterating over GCNode objects of
@@ -121,7 +141,11 @@ public:
   /** @brief Print allocator state summary for debugging. */
   static void printSummary();
 
-private:
+#ifdef HAVE_ADDRESS_SANITIZER
+  static void printStackTracesForFreedMemory(GCNode* deleted_node);
+#endif
+
+ private:
   friend class AllocatorSuperblock;
   friend class AllocationTable;
 
@@ -173,8 +197,15 @@ private:
    * in a superblock, since they need to be assigned the superblock
    * pointer and block index.
    */
+#ifdef HAVE_ADDRESS_SANITIZER
+  static void addLargeAllocationToFreelist(void* pointer,
+                                           unsigned size_class,
+                                           StackTraceHandle allocated,
+                                           StackTraceHandle freed);
+#else
   static void addLargeAllocationToFreelist(void* pointer,
       unsigned size_class);
+#endif
 
   /**
    * @brief Add a free list node to a free list by size class.
@@ -228,7 +259,7 @@ private:
   static FreeListNode* s_quarantine[s_num_freelists];
 
   /** The size of the redzones to be added before and after each allocation. */
-  static constexpr int s_redzone_size = 8;
+  static constexpr int s_redzone_size = 16;
 
   /** @brief Helper function for redzone address calculations. */
   static void* offsetPointer(void* pointer, std::size_t bytes);

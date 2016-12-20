@@ -100,7 +100,12 @@ public:
    * Free a pointer inside a given superblock. The block MUST be in the given
    * superblock.
    */
+#ifdef HAVE_ADDRESS_SANITIZER
+  void freeBlock(void* pointer,
+                 StackTraceHandle allocation_trace, StackTraceHandle free_trace);
+#else
   void freeBlock(void* pointer);
+#endif
 
   /**
    * Tests the bitset if a block index is allocated.
@@ -309,4 +314,3 @@ private:
 }
 
 #endif // RHO_ALLOCATORSUPERBLOCK_HPP
-
