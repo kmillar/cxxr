@@ -113,8 +113,14 @@ class VariableLengthArray : public GCNode {
         }
     }
 
-    T& operator[](size_type t) noexcept             { return *(begin() + t); }
-    const T& operator[](size_type t) const noexcept { return *(begin() + t); }
+    T& operator[](size_type t) noexcept {
+        assert(t < size());
+        return *(begin() + t);
+    }
+    const T& operator[](size_type t) const noexcept {
+        assert(t < size());
+        return *(begin() + t);
+    }
     // at() not implemented.
 
     reference front() noexcept              { return *begin(); }
@@ -133,9 +139,13 @@ class VariableLengthArray : public GCNode {
             std::copy(first, last, begin());
             shrinkToSize(n);
         } else {
-            size_type m = std::min(n, size());
+            size_type m = size();
+            // Elements [first, first + m) get copied to initialized memory
+            // at [begin, end)
             std::copy(first, first + m, begin());
-            std::uninitialized_copy(first + m, last, begin() + m);
+            // Elements [first + m, last) get copied to uninitialized memory
+            // at [end, begin + n)
+            std::uninitialized_copy(first + m, last, end());
             m_size = n;
         }
     }
@@ -159,23 +169,21 @@ class VariableLengthArray : public GCNode {
     void pop_back() noexcept      { destroy_last_n_elements(1); }
 
     void insert(const_iterator pos, const T& value) {
+        assert(size() + 1 <= capacity());
         if (pos == end()) {
             push_back(value);
         } else {
-            assert(size() + 1 <= capacity());
-            uninitialized_move(end() - 1, end(), end());
-            std::move_backward(pos, end() - 1, end());
+            moveElementsForward(pos, end(), pos + 1);
             *pos = value;
             m_size++;
         }
     }
     iterator insert(const_iterator pos, T&& value) {
+        assert(size() + 1 <= capacity());
         if (pos == end()) {
             push_back(std::forward<T>(value));
         } else {
-            assert(size() + 1 <= capacity());
-            uninitialized_move(end() - 1, end(), end());
-            std::move_backward(pos, end() - 1, end());
+            moveElementsForward(pos, end(), pos + 1);
             *pos = std::forward<T>(value);
             m_size++;
         }
@@ -187,14 +195,18 @@ class VariableLengthArray : public GCNode {
         assert(size() + n <= capacity());
 
         // Move elements after pos forward by n elements.
-        iterator p = std::max(pos, end() - n);
-        uninitialized_move(p, end(), p + n);
-        std::move_backward(pos, p, end());
+        moveElementsForward(pos, end(), pos + n);
 
         // Insert new elements.
-        iterator q = std::min(last, first + (end() - pos));
-        std::copy(first, q, pos);
-        std::uninitialized_copy(q, last, end());
+        if (pos + n < end()) {
+            std::copy(first, last, pos);
+        } else {
+            iterator q = first + (end() - pos);
+            // Elements in [first, q) get copied to [pos, end).
+            std::copy(first, q, pos);
+            // Elements in [q, last) get copied to [end, pos + n)
+            std::uninitialized_copy(q, last, end());
+        }
         m_size += n;
     }
 
@@ -217,12 +229,7 @@ class VariableLengthArray : public GCNode {
     template<typename... Args>
     iterator emplace(const_iterator pos, Args&&... args) {
         assert(size() + 1 < capacity());
-        if (pos == end()) {
-            emplace_back(std::forward<Args>(args)...);
-            return;
-        }
-        uninitialized_move(end() - 1, end(), end());
-        std::move_backward(pos, end() - 1, end());
+        moveElementsForward(pos, end(), pos + 1);
         *pos = value_type(std::forward<Args>(args)...);
         m_size++;
     }
@@ -230,8 +237,9 @@ class VariableLengthArray : public GCNode {
     template<typename... Args>
     reference emplace_back(Args&&... args) {
         assert(size() + 1 < capacity());
-        new (end()) value_type(args...);
+        new (end()) value_type(std::forward<Args>(args)...);
         m_size++;
+        return back();
     }
 
     // GCNode methods.
@@ -254,7 +262,8 @@ class VariableLengthArray : public GCNode {
                                         sizeof(VariableLengthArray) + bytes);
         }
 
-        clear(); }
+        clear();
+    }
   private:
     template<typename, unsigned N>
     friend class Vector;
@@ -268,7 +277,8 @@ class VariableLengthArray : public GCNode {
         m_capacity = capacity;
     }
 
-    static void uninitialized_move(iterator first, iterator last, iterator dest) {
+    static void uninitialized_move(iterator first, iterator last,
+                                   iterator dest) {
         std::move(first, last,
                   std::raw_storage_iterator<iterator, value_type>(dest));
     }
@@ -283,6 +293,21 @@ class VariableLengthArray : public GCNode {
             pos->~value_type();
         }
         m_size -= n;
+    }
+
+    void moveElementsForward(iterator first, iterator last, iterator dest) {
+        size_t n = last - first;
+        if (dest + n < end()) {
+            std::move_backward(first, last, dest + n);
+        } else {
+            iterator p = end() - n;
+            // Elements in [p, last) get moved to the uninitialized memory at
+            // [end(), end() + n)
+            uninitialized_move(p, last, end());
+            // Elements in [first, p) get moved to the initialized memory at
+            // [dest, end())
+            std::move_backward(first, p, end());
+        }
     }
 };
 

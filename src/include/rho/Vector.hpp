@@ -155,8 +155,14 @@ class Vector {
         }
     }
 
-    T& operator[](size_type t) noexcept             { return *(begin() + t); }
-    const T& operator[](size_type t) const noexcept { return *(begin() + t); }
+    T& operator[](size_type t) noexcept             {
+        assert(t < size());
+        return *(begin() + t);
+    }
+    const T& operator[](size_type t) const noexcept {
+        assert(t < size());
+        return *(begin() + t);
+    }
     T& at(size_type t) {
         if (t < size()) throw std::out_of_range("Vector");
         return (*this)[t];
@@ -187,9 +193,14 @@ class Vector {
             shrinkToSize(n);
         }
         else {
-            size_type m = std::min(n, size());
+            size_type m = size();
+            reallocateIfNeeded(n);
+            // Elements [first, first + m) get copied to initialized memory
+            // at [begin, end)
             std::copy(first, first + m, begin());
-            insert(begin() + m, first + m, last);
+            // Elements [first + m, last) get copied to uninitialized memory
+            // at [end, begin + n)
+            std::uninitialized_copy(first + m, last, end());
             setSize(n);
         }
     }
@@ -222,8 +233,8 @@ class Vector {
             size_type offset = pos - begin();
             reallocateIfNeeded(size() + 1);
             iterator fixed_pos = begin() + offset;
-            uninitialized_move(end() - 1, end(), end());
-            std::move_backward(fixed_pos, end() - 1, end());
+
+            moveElementsForward(fixed_pos, end(), fixed_pos + 1);
             *fixed_pos = value;
             setSize(size() + 1);
             return fixed_pos;
@@ -232,13 +243,13 @@ class Vector {
     iterator insert(const_iterator pos, T&& value) {
         if (pos == end()) {
             push_back(std::forward<T>(value));
-            return &back;
+            return &back();
         } else {
             size_type offset = pos - begin();
             reallocateIfNeeded(size() + 1);
             iterator fixed_pos = begin() + offset;
-            uninitialized_move(end() - 1, end(), end());
-            std::move_backward(fixed_pos, end() - 1, end());
+
+            moveElementsForward(fixed_pos, end(), fixed_pos + 1);
             *fixed_pos = std::forward<T>(value);
             setSize(size() + 1);
             return fixed_pos;
@@ -260,14 +271,18 @@ class Vector {
         pos = begin() + offset;
 
         // Move elements after pos forward by n elements.
-        iterator p = std::max(const_cast<iterator>(pos), end() - n);
-        uninitialized_move(p, end(), p + n);
-        std::move_backward(const_cast<iterator>(pos), p, end());
+        moveElementsForward(pos, end(), pos + n);
 
         // Insert new elements.
-        InputIt q = std::min(last, first + (end() - pos));
-        std::copy(first, q, const_cast<iterator>(pos));
-        std::uninitialized_copy(q, last, end());
+        if (pos + n < end()) {
+            std::copy(first, last, pos);
+        } else {
+            InputIt q = first + (end() - pos);
+            // Elements in [first, q) get copied to [pos, end).
+            std::copy(first, q, const_cast<iterator>(pos));
+            // Elements in [q, last) get copied to [end, pos + n)
+            std::uninitialized_copy(q, last, end());
+        }
         setSize(size() + n);
     }
 
@@ -293,15 +308,15 @@ class Vector {
 
     template<typename... Args>
     iterator emplace(const_iterator pos, Args&&... args) {
-        size_type offset = pos - begin();
         if (pos == end()) {
             emplace_back(std::forward<Args>(args)...);
             return;
         }
+        size_type offset = pos - begin();
         reallocateIfNeeded(size() + 1);
         pos = begin() + offset;
-        uninitialized_move(end() - 1, end(), end());
-        std::move_backward(pos, end() - 1, end());
+
+        moveElementsForward(pos, end(), pos + 1);
         *pos = value_type(std::forward<Args>(args)...);
         setSize(size() + 1);
     }
@@ -309,7 +324,7 @@ class Vector {
     template<typename... Args>
     reference emplace_back(Args&&... args) {
         reallocateIfNeeded(size() + 1);
-        new (end()) value_type(args...);
+        new (end()) value_type(std::forward<Args>(args)...);
         setSize(size() + 1);
         return back();
     }
@@ -379,7 +394,8 @@ class Vector {
             clear();
             // default-construct the pointer.
             m_is_small = false;
-            new (&getPointer()) PointerType;
+            PointerType* p = &getPointer();
+            new (p) PointerType;
             m_size = stored_size;
         }
         getPointer() = data;
@@ -410,7 +426,6 @@ class Vector {
             = VariableLengthArray<T>::create(new_capacity);
         new_data->assign(begin(), end());
         setPointer(new_data);
-        m_is_small = false;
     }
 
     void shrinkToSize(size_type count) noexcept {
@@ -425,6 +440,21 @@ class Vector {
         }
         setSize(size() - n);
     };
+
+    void moveElementsForward(iterator first, iterator last, iterator dest) {
+        size_t n = last - first;
+        if (dest + n < end()) {
+            std::move_backward(first, last, dest + n);
+        } else {
+            iterator p = end() - n;
+            // Elements in [p, last) get moved to the uninitialized memory at
+            // [end(), end() + n)
+            uninitialized_move(p, last, end());
+            // Elements in [first, p) get moved to the initialized memory at
+            // [dest, end())
+            std::move_backward(first, p, end());
+        }
+    }
 
     static void uninitialized_move(iterator first, iterator last,
                                    iterator dest) {
