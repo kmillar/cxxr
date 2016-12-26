@@ -69,7 +69,7 @@ using namespace __sanitizer;
 
 u32 __asan_store_stacktrace() {
   BufferedStackTrace stack;
-  unsigned max_depth = 10;  // Must be at least 3.
+  unsigned max_depth = 20;  // Must be at least 3.
   stack.SlowUnwindStack(StackTrace::GetCurrentPc(), max_depth);
   return StackDepotPut(stack);
 }

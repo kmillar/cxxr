@@ -206,9 +206,23 @@ void WeakRef::markThru()
 {
     WeakRef::check();
     WRList newlive;
-    
+
     WRList* live = getLive();
     WRList* finalization_pending = getFinalizationPending();
+
+    // If there are any nodes still pending finalization, mark them and their
+    // keys so they don't get deleted until finalization is done.
+    {
+	GCNode::Marker marker;
+	for (auto weak_ref: *finalization_pending) {
+	    if (weak_ref->m_Rfinalizer)
+		marker(weak_ref->m_Rfinalizer);
+	    if (weak_ref->m_Rfinalizer || weak_ref->m_Cfinalizer) {
+		marker(weak_ref);
+		marker(weak_ref->m_key);
+	    }
+	}
+    }
 
     // Step 2-3 of algorithm.  Mark the value and R finalizer if the
     // key is marked.
@@ -300,7 +314,7 @@ bool WeakRef::runFinalizers()
     static Rboolean running = FALSE;
     if (running) return FALSE;
     running = TRUE;
-    
+
     try {
 	WeakRef::check();
 
@@ -365,7 +379,7 @@ SEXP R_MakeWeakRef(SEXP key, SEXP val, SEXP fin, Rboolean onexit)
 	finf = dynamic_cast<FunctionBase*>(fin);
 	if (!finf)
 	    Rf_error(_("finalizer must be a function or NULL"));
-    } 
+    }
     return new WeakRef(key, val, finf, onexit);
 }
 

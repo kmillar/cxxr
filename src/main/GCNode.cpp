@@ -119,7 +119,7 @@ void GCNode::destruct_aux() {
     }
     s_moribund->erase(it);
 }
-    
+
 extern RObject* R_Srcref;
 
 void GCNode::gc(bool markSweep) {
@@ -141,15 +141,8 @@ void GCNode::gc(bool markSweep) {
 }
 
 void GCNode::markSweepGC() {
-    // NB: setting this flag implies that the garbage collection will ignore
-    // any new stack roots.  To ensure correctness, this function must not call
-    // any code that depends on normal operation of the garbage collector.
-    s_on_stack_bits_correct = true;
-
     mark();
     sweep();
-
-    s_on_stack_bits_correct = false;
 }
 
 void GCNode::gclite() {

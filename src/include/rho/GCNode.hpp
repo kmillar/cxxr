@@ -455,22 +455,17 @@ namespace rho {
      */
     void initializeMemorySubsystem();
 
-/**
- * @brief Visit an object, or call its visitReferents() function if possible.
- *
- * If \a object is convertible to GCNode*, then this function calls (*v)(object).
- * Otherwise, if \a object has a visitReferents() function, then this calls
- * object.visitReferents(v).
- * In all other cases, this does nothing.
- */
-// GCNode variant.
-inline void visitObjectOrReferents(const GCNode* object, GCNode::const_visitor* v) {
+namespace internal {
+
+// Objects that behave like GCNode*.
+template<typename T>
+inline auto visitObjectOrReferents(const T& object, GCNode::const_visitor* v, int)
+    -> typename std::enable_if<std::is_same<decltype((*v)(object)), void>::value>::type
+{
     (*v)(object);
 }
 
-namespace internal {
-
-// Variant with a visitReferents function.
+// Other objects with a visitReferents function.
 template<typename T>
 auto visitObjectOrReferents(const T& object, GCNode::const_visitor* v, int)
     -> typename std::enable_if<
@@ -480,17 +475,25 @@ auto visitObjectOrReferents(const T& object, GCNode::const_visitor* v, int)
     object.visitReferents(v);
 }
 
-
 // Do nothing case.
 template<typename T>
 void visitObjectOrReferents(const T& object, GCNode::const_visitor* v, long)
 { }
 
-}
+}  // namespace internal
 
+/**
+ * @brief Visit an object, or call its visitReferents() function if possible.
+ *
+ * If \a object is convertible to GCNode*, then this function calls (*v)(object).
+ * Otherwise, if \a object has a visitReferents() function, then this calls
+ * object.visitReferents(v).
+ * In all other cases, this does nothing.
+ */
 template<typename T>
 void visitObjectOrReferents(const T& object, GCNode::const_visitor* v)
 {
+    static_assert(sizeof(T) >= 0, "T must be a complete type");
     internal::visitObjectOrReferents(object, v, 0);
 }
 
