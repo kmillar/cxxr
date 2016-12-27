@@ -55,7 +55,7 @@ PairList* Frame::Binding::asPairList(PairList* tail) const
 }
 
 // Frame::Binding::assign() is defined in envir.cpp (for the time being).
-	
+
 pair<RObject*, bool>
 Frame::Binding::forcedValueSlow() const
 {
@@ -63,7 +63,7 @@ Frame::Binding::forcedValueSlow() const
     RObject* val = m_value;
 
     if (val == argumentTag()) {
-        return frame()->argumentValue(m_argument_id);
+	return frame()->argumentValue(m_argument_id);
     }
     if (val && val->sexptype() == PROMSXP) {
 	Promise* prom = static_cast<Promise*>(val);
@@ -93,7 +93,7 @@ void Frame::Binding::fromPairList(PairList* pl)
     else setValue(pl->car(), pl_origin);
     setLocking(pl->m_binding_locked);
 }
-    
+
 void Frame::Binding::initialize(Frame* frame, const Symbol* sym)
 {
     if (m_frame)
@@ -161,7 +161,6 @@ Frame::Frame(const FrameDescriptor* descriptor, const ArgList& promised_args)
     m_descriptor = descriptor;
 }
 
-// NB: this is always a normal frame, never an execution frame.
 Frame::Frame(const Frame& source)
     : m_descriptor(source.m_descriptor), m_bindings_size(source.m_bindings_size),
       m_used_bindings_size(0), m_cache_count(0), m_locked(source.m_locked),
@@ -170,6 +169,8 @@ Frame::Frame(const Frame& source)
       m_promised_args(source.m_promised_args)
 {
     m_promised_args_protect = m_promised_args.list();
+    // m_default_arglist isn't copied as any values in there are going to be
+    // promoted to a Promise in importBindings().
     m_bindings = new Binding[m_bindings_size];
     importBindings(&source);
     if (source.isLocked())
@@ -351,7 +352,7 @@ Frame::Binding* Frame::obtainBinding(const Symbol* symbol)
 	}
 	return binding;
     }
-    
+
     if (m_descriptor)
     {
 	// Use the pressigned location.
@@ -367,8 +368,8 @@ Frame::Binding* Frame::obtainBinding(const Symbol* symbol)
 	binding = Frame::binding(symbol);
 	if (binding)
 	    return binding;
-	
-        // Otherwise return the first unused space in the array if any.
+
+	// Otherwise return the first unused space in the array if any.
 	for (unsigned char i = 0; i < m_bindings_size; ++i) {
 	    if (!m_bindings[i].isSet()) {
 		// Found an unused spot.
@@ -452,12 +453,12 @@ void Frame::visitReferents(const_visitor* v) const
     if (m_promised_args_protect)
 	(*v)(m_promised_args_protect);
     for (auto &item : m_default_arglist) {
-        item.visitReferents(v);
+	item.visitReferents(v);
     }
 }
 
 void Frame::addDefaultArgument(const Symbol* symbol, const RObject* expression,
-                               Environment* env, int frame_location)
+			       Environment* env, int frame_location)
 {
   Binding* binding = frame_location == -1
       ? obtainBinding(symbol)
@@ -473,15 +474,15 @@ void Frame::addDefaultArgument(const Symbol* symbol, const RObject* expression,
 std::pair<RObject*, bool> Frame::argumentValue(unsigned char argumentId) const
 {
     PromiseData& promise = const_cast<PromiseData&>(
-        m_default_arglist[argumentId]);
+	m_default_arglist[argumentId]);
     bool already_evaluated = promise.evaluated();
     return std::make_pair(promise.evaluate(), !already_evaluated);
 }
 
 Promise* Frame::argumentValueAsPromise(unsigned char argumentId) const {
     return new Promise(
-        const_cast<PromiseData*>(&m_default_arglist[argumentId]),
-        this);
+	const_cast<PromiseData*>(&m_default_arglist[argumentId]),
+	this);
 }
 
 namespace rho {
