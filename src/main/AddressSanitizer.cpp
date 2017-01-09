@@ -22,8 +22,9 @@
  */
 
 #include "rho/AddressSanitizer.hpp"
+#include <stdio.h>
 
-#if HAVE_ASAN && defined(__clang__)
+#if HAVE_ASAN && defined(__clang__) && defined(STORE_ASAN_TRACES)
 
 // Re-declare some sanitizer internals.
 namespace __sanitizer {
@@ -64,13 +65,13 @@ u32 StackDepotPut(StackTrace stack);
 StackTrace StackDepotGet(u32 id);
 
 }  // End of declarations of sanitizer internals.
-
 using namespace __sanitizer;
 
 u32 __asan_store_stacktrace() {
   BufferedStackTrace stack;
   unsigned max_depth = 20;  // Must be at least 3.
   stack.SlowUnwindStack(StackTrace::GetCurrentPc(), max_depth);
+
   return StackDepotPut(stack);
 }
 
@@ -78,4 +79,18 @@ void __asan_print_stacktrace(u32 trace_id) {
   StackDepotGet(trace_id).Print();
 }
 
+#else
+namespace __sanitizer {
+    typedef unsigned long uptr;
+    typedef uint32_t u32;
+}
+using namespace __sanitizer;
+
+u32 __asan_store_stacktrace() {
+    return 0;
+}
+
+void __asan_print_stacktrace(u32) {
+    printf("need to define STORE_ASAN_TRACES to get this stack trace\n");
+}
 #endif
