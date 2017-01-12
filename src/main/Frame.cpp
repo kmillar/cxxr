@@ -277,6 +277,9 @@ void Frame::detachReferents()
 {
     clear();
     m_descriptor.detach();
+    m_default_arglist.clear();
+    if (m_promised_args_protect)
+	m_promised_args_protect.detach();
 }
 
 bool Frame::erase(const Symbol* symbol)
@@ -445,6 +448,7 @@ void Frame::lockBindings() {
 
 void Frame::visitReferents(const_visitor* v) const
 {
+    GCNode::visitReferents(v);
     visitBindings([=](const Binding* binding) {
 	    binding->visitReferents(v);
 	});
@@ -480,9 +484,7 @@ std::pair<RObject*, bool> Frame::argumentValue(unsigned char argumentId) const
 }
 
 Promise* Frame::argumentValueAsPromise(unsigned char argumentId) const {
-    return new Promise(
-	const_cast<PromiseData*>(&m_default_arglist[argumentId]),
-	this);
+    return const_cast<PromiseData&>(m_default_arglist[argumentId]).asPromise();
 }
 
 namespace rho {
