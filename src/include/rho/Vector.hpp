@@ -261,14 +261,14 @@ class Vector {
                  std::is_base_of<std::input_iterator_tag,
                                  typename std::iterator_traits<InputIt>::iterator_category>
                  ::value>::type>
-    void insert(const_iterator pos, InputIt first, InputIt last) {
+    void insert(const_iterator pos_, InputIt first, InputIt last) {
         if (first == last) {
             return;
         }
         size_type n = last - first;
-        size_type offset = pos - begin();
+        size_type offset = pos_ - begin();
         reallocateIfNeeded(size() + n);
-        pos = begin() + offset;
+        iterator pos = begin() + offset;
 
         // Move elements after pos forward by n elements.
         moveElementsForward(pos, end(), pos + n);
@@ -292,9 +292,11 @@ class Vector {
     }
 
     iterator erase(const_iterator pos) noexcept {
-        std::move(std::next(pos), cend(), const_cast<iterator>(pos));
+        // Need to get rid of the 'const', so std::move can be used.
+        iterator iter = const_cast<iterator>(pos);
+        std::move(std::next(iter), end(), iter);
         destroy_last_n_elements(1);
-        return const_cast<iterator>(pos);
+        return iter;
     }
     iterator erase(const_iterator first, const_iterator last) noexcept {
         std::move(last, cend(), const_cast<iterator>(first));
@@ -389,14 +391,13 @@ class Vector {
     void setPointer(VariableLengthArray<T>* data) {
         assert(m_size == data->size());
         if (isSmall()) {
-            size_type stored_size = size();
             // deallocate the existing objects.
             clear();
             // default-construct the pointer.
             m_is_small = false;
             PointerType* p = &getPointer();
             new (p) PointerType;
-            m_size = stored_size;
+            m_size = data->size();
         }
         getPointer() = data;
     }
@@ -424,7 +425,8 @@ class Vector {
         new_capacity = std::max(new_capacity,capacity() + capacity() / 2);
         VariableLengthArray<T>* new_data
             = VariableLengthArray<T>::create(new_capacity);
-        new_data->assign(begin(), end());
+        new_data->m_size = size();
+        uninitialized_move(begin(), end(), new_data->begin());
         setPointer(new_data);
     }
 

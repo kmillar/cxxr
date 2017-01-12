@@ -279,8 +279,9 @@ class VariableLengthArray : public GCNode {
 
     static void uninitialized_move(iterator first, iterator last,
                                    iterator dest) {
-        std::move(first, last,
-                  std::raw_storage_iterator<iterator, value_type>(dest));
+        for (iterator iter = first; iter != last; ++iter, ++dest) {
+            new (static_cast<void*>(&*dest)) value_type(std::move(*iter));
+        }
     }
 
     void shrinkToSize(size_type count) noexcept {
