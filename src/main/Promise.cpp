@@ -65,10 +65,6 @@ PromiseData::PromiseData(Promise* value)
     m_value = value;
 }
 
-PromiseData::~PromiseData() = default;
-PromiseData::PromiseData(PromiseData&&) = default;
-PromiseData& PromiseData::operator=(PromiseData&& other) = default;
-
 Promise* PromiseData::asPromise() {
     Promise* promise = new Promise(std::move(*this));
     *this = PromiseData(promise);

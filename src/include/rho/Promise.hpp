@@ -72,17 +72,7 @@ namespace rho {
 
 	PromiseData(Promise* value);
 
-	~PromiseData();
-
-	//* @brief Move constructor.
-	PromiseData(PromiseData&&);
-	// @brief Move assignment operator.
-	PromiseData& operator=(PromiseData&& other);
-
-	// PromiseData objects cannot be copied, only moved.  This helps
-	// enforce that the promise is only evaluated once.
-	PromiseData(const PromiseData&) = delete;
-	PromiseData& operator=(const PromiseData&) = delete;
+	// Default destructor, copy, move and assignment operators are all fine.
 
 	static PromiseData createEvaluatedPromise(const RObject* expression,
 						  RObject* evaluated_value) {
