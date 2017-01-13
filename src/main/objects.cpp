@@ -404,15 +404,15 @@ static SEXP fixcall(Expression* call, const ArgList& args)
     SEXP s;
     int found;
 
-    for(auto& arg : args.getArgs()) {
+    for(auto& arg : args) {
         if(arg.tag() != R_NilValue) {
 		found = 0;
 		for(s = call; CDR(s) != R_NilValue; s = CDR(s))
                     if(TAG(CDR(s)) == arg.tag()) found = 1;
 		if( !found ) {
 			SETCDR(s, Rf_allocList(1));
-			SET_TAG(CDR(s), const_cast<RObject*>(arg.tag()));
-			SETCAR(CDR(s), Rf_duplicate(arg.car()));
+			SET_TAG(CDR(s), const_cast<Symbol*>(arg.tag()));
+			SETCAR(CDR(s), Rf_duplicate(arg.value()));
 		}
 	}
     }
@@ -558,8 +558,8 @@ SEXP attribute_hidden do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
 	{
 	    matchedarg = PairList::cons(nullptr);  // Dummy first element
 	    PairList* t = matchedarg;
-	    for (const ConsCell& s : cptr->promiseArgs().getArgs()) {
-		t->setTail(PairList::cons(s.car(), nullptr, s.tag()));
+	    for (const Argument& arg : cptr->promiseArgs()) {
+		t->setTail(PairList::cons(arg.value(), nullptr, arg.tag()));
 		t = t->tail();
 	    }
 	    matchedarg = matchedarg->tail();  // Discard dummy element

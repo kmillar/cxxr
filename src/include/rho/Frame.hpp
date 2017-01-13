@@ -991,7 +991,6 @@ namespace rho {
 
 	// The arguments that were passed in to the closure.
 	ArgList m_promised_args;
-	GCEdge<const PairList> m_promised_args_protect;
 
         std::pair<RObject*, bool> argumentValue(unsigned char argument_id) const;
 

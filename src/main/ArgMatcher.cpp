@@ -346,8 +346,8 @@ struct DereferencedEquality {
 ArgMatchCache::ArgMatchCache(int num_formals, const ArgList& args)
     : m_num_formals(num_formals), m_values(num_formals, -1)
  {
-     for (const ConsCell& arg : args.getArgs()) {
-	m_tags.push_back(SEXP_downcast<const Symbol*>(arg.tag()));
+     for (const Argument& arg : args) {
+	m_tags.push_back(arg.tag());
     }
 }
 
@@ -419,14 +419,14 @@ void ArgMatcher::matchByPosition(const ArgList& supplied,
 	= m_dots_position == -1 ? m_formal_data.size() : m_dots_position;
     unsigned int supplied_index = 0;
     unsigned int formals_index = 0;
-    ArgList::const_iterator s = supplied.getArgs().begin();
-    const ArgList::const_iterator end = supplied.getArgs().end();
+    ArgList::const_iterator s = supplied.begin();
+    const ArgList::const_iterator end = supplied.end();
     for ( ;
 	 (s != end) && (formals_index < num_formals);
 	 ++s, ++formals_index, ++supplied_index)
     {
 	callback->matchedArgument(m_formal_data[formals_index],
-				  supplied_index, s->car());
+				  supplied_index, s->value());
     }
     // Set unmatched arguments to their default values.
     for (; formals_index < m_formal_data.size(); ++formals_index) {
@@ -447,7 +447,7 @@ void ArgMatcher::matchByPosition(const ArgList& supplied,
 			     supplied);
     } else {
 	if (s != end) {
-	    unusedArgsError(&*s);
+	    unusedArgsError(s, end);
 	}
     }
 }
@@ -467,10 +467,10 @@ void ArgMatcher::match(const ArgList& supplied,
     // Exact matches by tag:
     {
 	unsigned int sindex = 0;
-	for (const ConsCell& s : supplied.getArgs()) {
-	    const Symbol* tag = static_cast<const Symbol*>(s.tag());
+	for (const Argument& arg : supplied) {
+	    const Symbol* tag = arg.tag();
 	    const String* name = (tag ? tag->name() : nullptr);
-	    RObject* value = s.car();
+	    RObject* value = arg.value();
 	    FormalMap::const_iterator fmit 
 		= (name ? m_formal_index.lower_bound(name)
 		   : m_formal_index.end());

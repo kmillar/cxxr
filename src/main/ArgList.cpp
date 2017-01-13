@@ -42,17 +42,69 @@ using namespace rho;
 
 // Implementation of ArgList::coerceTag() is in coerce.cpp
 
-ArgList::ArgList(const ArgList& other)
-    : ArgList(other.list(), other.status()) {}
+static DottedArgs* getDottedArgs(Environment* env)
+{
+    Frame::Binding* binding = env->findBinding(DotsSymbol);
+    if (!binding) {
+	Rf_error(_("'...' used in an incorrect context"));
+    }
+    RObject* dots = binding->forcedValue();
+    if (!dots || dots == Symbol::missingArgument()) {
+	return nullptr;
+    }
+    if (dots->sexptype() != DOTSXP) {
+	Rf_error(_("'...' used in an incorrect context"));
+    }
+    return static_cast<DottedArgs*>(dots);
+}
 
-PairList* ArgList::append(RObject* value, const RObject* tag,
-			  PairList* last_element) {
-    PairList* object = PairList::cons(value, nullptr, tag);
-    if (last_element)
-	last_element->setTail(object);
-    else
-	setList(object);
-    return object;
+ArgList::ArgList(const PairList* args, Status status)
+    : m_status(status)
+{
+    for (const auto& arg : *args) {
+	emplace_back(SEXP_downcast<const Symbol*>(arg.tag()), arg.car());
+    }
+}
+
+ArgList::ArgList(std::initializer_list<RObject*> args, Status status)
+    : m_status(status) {
+    for (RObject* arg : args) {
+	emplace_back(nullptr, arg);
+    }
+}
+
+template<typename Function>
+void ArgList::transform(Environment* env, Function fun)
+{
+    if (m_status != RAW || !has3Dots()) {
+	// We can do this in-place.
+	for (int i = 0; i < size(); i++) {
+	    fun((*this)[i], i + 1);
+	}
+    } else {
+	// We may need to expand out '...'.
+	Vector<Argument> transformed;
+	int arg_number = 1;
+	for (Argument& arg : *this) {
+	    if (arg.value() == DotsSymbol) {
+		DottedArgs* dot_args = getDottedArgs(env);
+		if (dot_args) {
+		    for (const auto& dot_arg : *dot_args) {
+			transformed.push_back(
+			    Argument(SEXP_downcast<const Symbol*>(dot_arg.tag()),
+				     dot_arg.car()));
+			fun(transformed.back(), arg_number);
+			arg_number++;
+		    }
+		}
+	    } else {
+		transformed.push_back(std::move(arg));
+		fun(transformed.back(), arg_number);
+		arg_number++;
+	    }
+	}
+	static_cast<Vector<Argument>&>(*this) = std::move(transformed);
+    }
 }
 
 void ArgList::evaluateToArray(Environment* env,
@@ -60,19 +112,35 @@ void ArgList::evaluateToArray(Environment* env,
 			      MissingArgHandling allow_missing) const
 {
     assert(allow_missing != MissingArgHandling::Drop);
-
     unsigned int arg_number = 0;
-    for (const ConsCell& arg_cell : getExpandedArgs(env)) {
-	RObject* arg = arg_cell.car();
-	RObject* value;
-	if (m_status == EVALUATED) {
-	    value = arg;
-	} else {
-	    value = evaluateSingleArgument(arg, env, allow_missing,
-					   arg_number + 1);
+    Status status = m_status;
+
+    if (status == EVALUATED) {
+	for (const Argument& arg : *this) {
+	    evaluated_args[arg_number] = arg.value();
+	    ++arg_number;
 	}
-	evaluated_args[arg_number] = value;
-	++arg_number;
+	assert(arg_number == num_args);
+	return;
+    }
+
+    for (const Argument& arg : *this) {
+	if (status == RAW && arg.value() == DotsSymbol) {
+	    DottedArgs* dot_args = getDottedArgs(env);
+	    if (dot_args) {
+		for (const auto& dot_arg : *dot_args) {
+		    evaluated_args[arg_number] =
+			evaluateSingleArgument(dot_arg.car(), env,
+					       allow_missing, arg_number + 1);
+		    arg_number++;
+		}
+	    }
+	} else {
+	    evaluated_args[arg_number] =
+		evaluateSingleArgument(arg.value(), env, allow_missing,
+					   arg_number + 1);
+	    arg_number++;
+	}
     }
     assert(arg_number == num_args);
 }
@@ -80,22 +148,15 @@ void ArgList::evaluateToArray(Environment* env,
 void ArgList::evaluate(Environment* env,
 		       MissingArgHandling allow_missing)
 {
-    // assert(allow_missing != MissingArgHandling::Drop);
-
     if (m_status == EVALUATED)
 	return;
 
-    auto expanded_args = getExpandedArgs(env);
-    setList(nullptr);
-    PairList* lastout = nullptr;
-
-    unsigned int arg_number = 1;
-    for (const ConsCell& arg : expanded_args) {
-	RObject* value = evaluateSingleArgument(arg.car(), env,
-						allow_missing, arg_number);
-	lastout = append(value, arg.tag(), lastout);
-	++arg_number;
-    }
+    transform(env,
+	      [=](Argument& arg, int arg_number) {
+		  arg.setValue(
+		      evaluateSingleArgument(arg.value(), env, allow_missing,
+					     arg_number));
+	      });
     m_status = EVALUATED;
 }
 
@@ -103,8 +164,6 @@ RObject* ArgList::evaluateSingleArgument(const RObject* arg,
 					 Environment* env,
 					 MissingArgHandling allow_missing,
 					 int arg_number) const {
-    // assert(allow_missing != MissingArgHandling::Drop);
-
     if (arg && arg->sexptype() == SYMSXP) {
 	const Symbol* sym = static_cast<const Symbol*>(arg);
 	if (sym == Symbol::missingArgument()) {
@@ -121,84 +180,57 @@ RObject* ArgList::evaluateSingleArgument(const RObject* arg,
     return Evaluator::evaluate(const_cast<RObject*>(arg), env);
 }
 
+const PairList* ArgList::list() const {
+    PairList* result = nullptr;
+    for (auto iter = rbegin(); iter != rend(); ++iter) {
+	result = PairList::cons(iter->value(), result, iter->tag());
+    }
+    return result;
+};
+
 void ArgList::merge(const ConsCell* extraargs)
 {
     if (m_status != PROMISED)
 	Rf_error("Internal error: ArgList::merge() requires PROMISED ArgList");
+
     // Convert extraargs into a doubly linked list:
-    typedef std::list<pair<const RObject*, RObject*> > Xargs;
+    typedef std::list<pair<const Symbol*, RObject*> > Xargs;
     Xargs xargs;
     for (const ConsCell* cc = extraargs; cc; cc = cc->tail())
-	xargs.push_back(make_pair(cc->tag(), cc->car()));
+	xargs.push_back(
+	    make_pair(SEXP_downcast<const Symbol*>(cc->tag()), cc->car()));
+
     // Apply overriding arg values supplied in extraargs:
-    PairList* last = nullptr;
-    for (PairList* pl = mutable_list(); pl; pl = pl->tail()) {
-	last = pl;
-	const RObject* tag = pl->tag();
+    for (Argument& arg : *this) {
+	const RObject* tag = arg.tag();
 	if (tag) {
 	    Xargs::iterator it = xargs.begin();
 	    while (it != xargs.end() && (*it).first != tag)
 		++it;
 	    if (it != xargs.end()) {
-		pl->setCar((*it).second);
+		arg.setValue(it->second);
 		xargs.erase(it);
 	    }
 	}
     }
+
     // Append remaining extraargs:
     for (Xargs::const_iterator it = xargs.begin(); it != xargs.end(); ++it) {
-	last = append(it->second, it->first, last);
+	emplace_back(it->first, it->second);
     }
-}
-
-// TODO: these ought to handle '...'
-RObject* ArgList::get(int position) const {
-    ConsCell* cell = m_list.get();
-    for (int i = 0; i < position && cell != nullptr; i++) {
-	cell = cell->tail();
-    }
-    return cell ? cell->car() : nullptr;
-}
-
-void ArgList::set(int position, RObject* value) {
-    assert(position < size());
-    auto cell = mutable_list()->begin();
-    std::advance(cell, position);
-    cell->setCar(value);
-}
-
-const RObject* ArgList::getTag(int position) const {
-    ConsCell* cell = m_list.get();
-    for (int i = 0; i < position && cell != nullptr; i++) {
-	cell = cell->tail();
-    }
-    return cell ? cell->tag() : nullptr;
-}
-
-void ArgList::setTag(int position, const Symbol* tag) {
-    assert(position < size());
-    auto cell = mutable_list()->begin();
-    std::advance(cell, position);
-    cell->setTag(tag);
 }
 
 bool ArgList::has3Dots() const {
-  if (!list())
-    return false;
-
-  for (const ConsCell& cell : *list()) {
-    if (cell.car() == R_DotsSymbol)
+    for (auto& arg : *this) {
+	if (arg.value() == R_DotsSymbol)
       return true;
   }
   return false;
 }
 
 bool ArgList::hasTags() const {
-  if (!list())
-    return false;
-
-  for (const ConsCell& cell : *list()) {
-    if (cell.tag())
+    for (auto& arg : *this) {
+	if (arg.tag())
       return true;
   }
   return false;
@@ -206,20 +238,9 @@ bool ArgList::hasTags() const {
 
 void ArgList::stripTags()
 {
-    for (auto& item : *mutable_list()) {
+    for (auto& item : *this) {
 	item.setTag(nullptr);
     }
-}
-
-void ArgList::erase(int pos) {
-    assert(pos < size());
-    if (pos == 0) {
-	m_list = mutable_list()->tail();
-	return;
-    }
-    auto prev = mutable_list()->begin();
-    std::advance(prev, pos - 1);
-    prev->setTail(prev->tail()->tail());
 }
 
 const Symbol* ArgList::tag2Symbol(const RObject* tag)
@@ -234,77 +255,26 @@ void ArgList::wrapInPromises(Environment* env,
 {
     if (m_status == PROMISED)
 	return;
-    if (m_status == EVALUATED) {
+    if (m_status == EVALUATED)
+    {
+	// 'this' contains the evaluated values.  The expressions are in call.
 	assert(call != nullptr);
+	ArgList* values = this;
 	ArgList raw_args(call->tail(), RAW);
-	raw_args.wrapInForcedPromises(env, *this);
-	m_status = PROMISED;
-	m_list = raw_args.m_list;
+	raw_args.transform(env, [=](Argument& arg, int arg_number) {
+		if (arg_number - 1 > values->size()) {
+	Rf_error(_("dispatch error"));
+    }
+		arg.wrapInEvaluatedPromise(values->get(arg_number - 1));
+	    });
+	*this = std::move(raw_args);
 	return;
     }
     assert(env != nullptr);
 
-    auto expanded_args = getExpandedArgs(env);
-    setList(nullptr);
-    PairList* lastout = nullptr;
-
-    for (const ConsCell& arg : expanded_args) {
-	RObject* rawvalue = arg.car();
-	const Symbol* tag = tag2Symbol(arg.tag());
-	RObject* value = rawvalue == Symbol::missingArgument()
-	    ? rawvalue : new Promise(rawvalue, env);
-	lastout = append(value, tag, lastout);
-    }
-
+    transform(env, [=](Argument& arg, int arg_number) {
+	    if (arg.value() != Symbol::missingArgument())
+		arg.wrapInPromise(env);
+	});
     m_status = PROMISED;
-}
-
-void ArgList::wrapInForcedPromises(Environment* env,
-				   const ArgList& evaluated_values)
-{
-    assert(m_status == RAW);
-    assert(evaluated_values.status() == EVALUATED);
-
-    auto expanded_args = getExpandedArgs(env);
-    const auto& values = *evaluated_values.list();
-
-    setList(nullptr);
-    PairList* lastout = nullptr;
-
-    auto arg = expanded_args.begin();
-    auto value = values.begin();
-    for (; arg != expanded_args.end() && value != values.end();
-	 ++arg, ++value) {
-	const RObject* expr = arg->car();
-	const Symbol* tag = tag2Symbol(arg->tag());
-
-	Promise* promise = Promise::createEvaluatedPromise(expr, value->car());
-	lastout = append(promise, tag, lastout);
-    }
-
-    // Check to make sure that the lengths matched up OK.
-    if (arg != expanded_args.end() || value != values.end()) {
-	Rf_error(_("dispatch error"));
-    }
-
-    m_status = PROMISED;
-}
-
-void ArgList::const_iterator::handleDots()
-{
-    Frame::Binding* binding = m_env->findBinding(DotsSymbol);
-    if (!binding) {
-	Rf_error(_("'...' used in an incorrect context"));
-    }
-    RObject* dots = binding->forcedValue();
-    if (!dots || dots == Symbol::missingArgument()) {
-	// There aren't any dots to expand, so go on directly to the next
-	// argument.
-	++(*this);
-	return;
-    }
-    if (dots->sexptype() != DOTSXP) {
-	Rf_error(_("'...' used in an incorrect context"));
-    }
-    m_dots = static_cast<DottedArgs*>(dots);
 }

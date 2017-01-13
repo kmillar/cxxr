@@ -618,10 +618,10 @@ SEXP R_forceAndCall(SEXP e, int n, SEXP rho)
 
 	// Force the promises.
 	int i = 0;
-	auto args = arglist.getArgs();
-	for (auto cell = args.begin(); i < n && cell != args.end(); ++cell, ++i)
+	for (auto cell = arglist.begin(); i < n && cell != arglist.end();
+	     ++cell, ++i)
 	{
-	    SEXP p = cell->car();
+	    SEXP p = cell->value();
 	    if (TYPEOF(p) == PROMSXP)
 		Rf_eval(p, rho);
 	    else if (p == R_MissingArg)
@@ -1917,6 +1917,9 @@ Rf_Dispatch(const Expression* call, const BuiltInFunction* func,
 	    const ArgList& arglist, Environment* callenv)
 {
     assert(arglist.status() == ArgList::EVALUATED);
+    if (arglist.size() == 0) {
+	return std::make_pair(false, nullptr);
+    }
     GCStackRoot<> x(arglist.get(0));
 
     // try to dispatch on the object

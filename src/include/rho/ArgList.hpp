@@ -30,13 +30,18 @@
 #define ARGLIST_HPP 1
 
 #include <boost/range.hpp>
+#include "rho/Argument.hpp"
+#include "rho/GCEdge.hpp"
 #include "rho/GCStackRoot.hpp"
 #include "rho/PairList.hpp"
+#include "rho/Promise.hpp"
 #include "rho/Symbol.hpp"
+#include "rho/Vector.hpp"
 #include "R_ext/Error.h"
 
 namespace rho {
     class DottedArgs;
+    class Environment;
     class Expression;
 
     enum class MissingArgHandling {
@@ -54,7 +59,7 @@ namespace rho {
      * call to a FunctionBase object, and provides facilities for
      * manipulating the list in the various ways required
      */
-    class ArgList {
+    class ArgList : public Vector<Argument> {
     public:
 	/** @brief Way (if any) in which ArgList has been processed.
 	 */
@@ -70,66 +75,6 @@ namespace rho {
 			*/
 	};
 
-	class const_iterator : public std::iterator<std::forward_iterator_tag,
-						    ConsCell>
-	{
-	public:
-	    const_iterator operator++(int) {
-		const_iterator return_value = *this;
-		++(*this);
-		return return_value;
-	    }
-
-	    const_iterator operator++() {
-		if (m_dots) {
-		    m_dots = m_dots->tail();
-		    if (m_dots)
-			return *this;
-		}
-		m_arg = m_arg->tail();
-		if (m_env && m_arg && m_arg->car() == DotsSymbol) {
-		    handleDots();
-		}
-		return *this;
-	    }
-
-	    bool operator==(const_iterator other) const {
-		return m_arg == other.m_arg && m_dots == other.m_dots;
-	    }
-
-	    bool operator!=(const_iterator other) const {
-		return !(*this == other);
-	    }
-
-	    const ConsCell& operator*() const {
-		return *(operator->)();
-	    }
-	    const ConsCell* operator->() const {
-		if (m_dots)
-		    return m_dots;
-		return m_arg;
-	    }
-
-	    static const_iterator end(Environment* env) {
-		return const_iterator(nullptr, env);
-	    }
-	private:
-	    friend class ArgList;
-
-	    const_iterator(ConsCell* arg, Environment* env)
-		: m_arg(arg), m_dots(nullptr), m_env(env)
-	    {
-		if (arg && env && arg->car() == DotsSymbol)
-		    handleDots();
-	    }
-
-	    ConsCell* m_arg;
-	    ConsCell* m_dots;
-	    Environment* m_env;
-
-	    void handleDots();
-	};
-
 	/** @brief Constructor.
 	 *
 	 * @param args Pointer, possibly null, to a PairList of
@@ -141,11 +86,7 @@ namespace rho {
 	 *          \a args.  No check is made that the \a args list
 	 *          is actually consistent with the value of \a status.
 	 */
-	ArgList(const PairList* args, Status status)
-	    : m_orig_list(args),
-	      m_list(const_cast<PairList*>(args)),
-	      m_status(status)
-	{}
+	ArgList(const PairList* args, Status status);
 
 	/** @brief Constructor.
 	 *
@@ -157,10 +98,11 @@ namespace rho {
 	 *          \a args.  No check is made that the \a args list
 	 *          is actually consistent with the value of \a status.
 	 */
-	ArgList(std::initializer_list<RObject*> args, Status status)
-	    : ArgList(PairList::make(args.size(), args.begin()), status) { }
+	ArgList(std::initializer_list<RObject*> args, Status status);
 
-	explicit ArgList(const ArgList&);
+	explicit ArgList(const ArgList&) = default;
+	ArgList(ArgList&&) = default;
+	ArgList& operator=(ArgList&&) = default;
 
 	/** @brief Evaluate the arguments in the ArgList.
 	 *
@@ -256,67 +198,47 @@ namespace rho {
 			     MissingArgHandling allow_missing
 				 = MissingArgHandling::Error) const;
 
-	/** @brief Return the length of the arglist.
-	 */
-	size_t size() const {
-	    return listLength(list());
-	}
-
 	/** @brief Return the argument at the specified position.
 	 */
-	RObject* get(int position) const;
+	RObject* get(int position) const {
+	    return (*this)[position].value();
+	}
 
 	/** @brief Set the argument at the specified position.
 	 */
-	void set(int position, RObject* value);
+	void set(int position, RObject* value) {
+	    (*this)[position].setValue(value);
+	}
 
 	/** @brief Return the tag at the specified position.
 	 */
-	const RObject* getTag(int position) const;
+	const Symbol* getTag(int position) const {
+	    return (*this)[position].tag();
+	}
 
 	/** @brief Set the tag at the specified position.
 	 */
-	void setTag(int position, const Symbol* tag);
+	void setTag(int position, const Symbol* tag) {
+	    (*this)[position].setTag(tag);
+	}
 
 	/** @brief Remove the argument at the specified position.  Invalidates
 	 *     any existing iterators.
 	 */
-	void erase(int position);
-
-	/** @brief Iterator through the argument list, leaving '...' unchanged.
-	 *
-	 * @return iterator_range that iterates through the list of arguments.
-	 */
-	boost::iterator_range<const_iterator> getArgs() const {
-	    return boost::make_iterator_range(const_iterator(m_list, nullptr),
-					      const_iterator::end(nullptr));
-	}
-
-	/** @brief Iterator through the argument list, expanding '...'.
-	 *
-	 * @return iterator_range that iterates through the list of arguments.
-	 *        If this arglist contains '...', then the iteration will
-	 *        replace it with the elements that the '...' expands into.
-	 */
-	boost::iterator_range<const_iterator>
-	getExpandedArgs(Environment* env) const {
-	    return boost::make_iterator_range(const_iterator(m_list, env),
-					      const_iterator::end(env));
+	void erase(int position) {
+	    Vector::erase(begin() + position);
 	}
 
 	/** @brief Access the argument list as a PairList.
 	 *
-	 * @return pointer, possibly null, to the list of arguments in
-	 * their current state.
+	 * @return pointer, possibly null, to the list of arguments.
+	 *
+	 * @note This function can be very expensive as it creates a linked
+	 *    list for the arguments.
 	 */
-	const PairList* list() const
-	{
-	    return m_list;
-	}
-
-	const PairList* tags() const
-	{
-	    return m_list;
+	const PairList* list() const;
+	const PairList* tags() const {
+	    return list();
 	}
 
 	/** @brief Merge in new argument values..
@@ -432,29 +354,11 @@ namespace rho {
 	 *
 	 * @param call The call that the arguments came from.  Ignored unless
 	 *          the ArgList has status EVALUATED.
-	 *
-	 * @note It would be desirable to avoid producing a new
-	 * PairList, and to absorb this functionality directly into
-	 * the ArgMatcher::match() function.  But at present the
-	 * Promise-wrapped list is recorded in the context set up by
-	 * Closure::apply(), and used for other purposes.
 	 */
 	void wrapInPromises(Environment* env,
 			    const Expression* call = nullptr);
 
     private:
-	// Pointer to the argument list supplied to the constructor.
-	const PairList* const m_orig_list;
-
-	// The current argument list. The class code should never modify the
-	// PairList supplied as an argument to the constructor, even though the
-	// constructor casts const away when it initialises this data member.
-	GCStackRoot<PairList> m_list;
-
-	// wrapInPromises() defers actual promise creation, storing the promise
-	// environment here.  Promise objects are created only when needed.
-	GCStackRoot<Environment> m_promise_env;
-
 	Status m_status;
 
 	RObject* evaluateSingleArgument(const RObject* arg,
@@ -462,36 +366,20 @@ namespace rho {
 					MissingArgHandling allow_missing,
 					int arg_number) const;
 
-	void setList(PairList* list) {
-	    m_list = list;
-	}
-
-	PairList* mutable_list() {
-	    // Mustn't modify the list supplied to the constructor:
-	    if (m_list != nullptr && m_list == m_orig_list) {
-		m_list = m_list->clone();
-	    }
-	    return m_list;
-	}
-
-	/* @brief Appends item to the end of m_list.  Handles empty lists correctly.
+	// TODO: fix this comment.
+	/** @brief Iterate through the argument list, expanding '...'.
 	 *
-	 * @param value The value to add.
-	 * @param tag The tag to associate with the value.
-	 * @param last_element A pointer to the last element of m_list.
-	 *
-	 * @return A pointer to the current last element of m_list.
+	 * @return iterator_range that iterates through the list of arguments.
+	 *        If this arglist contains '...', then the iteration will
+	 *        replace it with the elements that the '...' expands into.
 	 */
-	PairList* append(RObject* value, const RObject* tag,
-			 PairList* last_element);
-
-	void wrapInForcedPromises(Environment* env,
-				  const ArgList& evaluated_values);
-
-	ArgList& operator=(const ArgList&) = delete;
+	template<typename Function>
+	void transform(Environment* env, Function fun);
 
 	// Coerce a tag that is not already a Symbol into Symbol form:
 	static const Symbol* coerceTag(const RObject* tag);
+
+	ArgList& operator=(const ArgList&) = delete;
     };
 }
 

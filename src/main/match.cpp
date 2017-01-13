@@ -55,6 +55,7 @@
 #include "rho/DottedArgs.hpp"
 #include "rho/FunctionContext.hpp"
 #include "rho/StringVector.hpp"
+#include <iterator>
 
 using namespace rho;
 
@@ -124,6 +125,22 @@ Rboolean Rf_pmatch(SEXP formal, SEXP tag, Rboolean exact)
  fail:
     Rf_error(_("invalid partial string match"));
     return FALSE;/* for -Wall */
+}
+
+void ArgMatcher::unusedArgsError(ArgList::const_iterator begin,
+				 ArgList::const_iterator end)
+{
+    GCStackRoot<PairList> unused_list;
+
+    for (auto arg = std::reverse_iterator<ArgList::const_iterator>(end);
+	 arg != std::reverse_iterator<ArgList::const_iterator>(begin); ++arg)
+    {
+	RObject* value = arg->value();
+	if (value->sexptype() == PROMSXP)
+	    value = const_cast<RObject*>(PREXPR(value));
+	unused_list = PairList::cons(value, unused_list, arg->tag());
+    }
+    unusedArgsError(unused_list);
 }
 
 void ArgMatcher::unusedArgsError(const SuppliedList& supplied_list)

@@ -292,7 +292,7 @@ RObject* Expression::invokeClosure(const Closure* func,
                                    const Frame* method_bindings) const
 {
   return GCStackFrameBoundary::withStackFrameBoundary(
-      [=]() { return invokeClosureImpl(func, calling_env, arglist,
+      [&]() { return invokeClosureImpl(func, calling_env, arglist,
                                        method_bindings); });
 }
 

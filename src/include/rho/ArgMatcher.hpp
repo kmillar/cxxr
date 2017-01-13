@@ -366,6 +366,8 @@ namespace rho {
 	// as indicated in supplied_list.
 	static void unusedArgsError(const SuppliedList& supplied_list);
 	static void unusedArgsError(const ConsCell* supplied_list);
+	static void unusedArgsError(ArgList::const_iterator begin,
+				    ArgList::const_iterator end);
 
 	static PairList* makePairList(
 	    std::initializer_list<const char*> arg_names);

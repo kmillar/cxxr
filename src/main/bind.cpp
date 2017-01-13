@@ -1102,14 +1102,14 @@ SEXP attribute_hidden do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
     ArgList arglist(SEXP_downcast<PairList*>(args), ArgList::RAW);
     arglist.wrapInPromises(SEXP_downcast<Environment*>(env));
     args = nullptr;
-    ArgList::const_iterator arg = arglist.getArgs().begin();
+    ArgList::const_iterator arg = arglist.begin();
     ++arg;  // skip deparse.level
-    const ArgList::const_iterator end = arglist.getArgs().end();
+    const ArgList::const_iterator end = arglist.end();
 
     const char *generic = ((PRIMVAL(op) == 1) ? "cbind" : "rbind");
     const char *klass = "";
     for ( ; arg != end; ++arg) {
-        PROTECT(obj = eval(arg->car(), env));
+	PROTECT(obj = eval(arg->value(), env));
 	if (tryS4 && !anyS4 && isS4(obj)) anyS4 = TRUE;
 	if (compatible && isObject(obj)) {
 	    SEXP classlist = PROTECT(R_data_class2(obj));
@@ -1167,8 +1167,8 @@ SEXP attribute_hidden do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
     data.ans_flags = 0;
     data.ans_length = 0;
     data.ans_nnames = 0;
-    for (const auto& arg : arglist.getArgs()) {
-	AnswerType(PRVALUE(arg.car()), 0, 0, &data, call);
+    for (const auto& arg : arglist) {
+	AnswerType(PRVALUE(arg.value()), 0, 0, &data, call);
     }
 
     /* zero-extent matrices shouldn't give NULL, but cbind(NULL) should: */
@@ -1250,8 +1250,8 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 
     /* check if we are in the zero-row case */
 
-    for (const auto& arg : args.getArgs()) {
-        u = PRVALUE(arg.car());
+    for (const auto& arg : args) {
+	u = PRVALUE(arg.value());
 	if((isMatrix(u) ? nrows(u) : length(u)) > 0) {
 	    lenmin = 1;
 	    break;
@@ -1261,8 +1261,8 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
     /* check conformability of matrix arguments */
 
     int na = 0;
-    for (const auto& arg : args.getArgs()) {
-        u = PRVALUE(arg.car());
+    for (const auto& arg : args) {
+	u = PRVALUE(arg.value());
 	dims = getAttrib(u, R_DimSymbol);
 	if (length(dims) == 2) {
 	    if (mrows == -1)
@@ -1283,8 +1283,8 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
     /* Check conformability of vector arguments. -- Look for dimnames. */
 
     na = 0;
-    for (const auto& arg : args.getArgs()) {
-        u = PRVALUE(arg.car());
+    for (const auto& arg : args) {
+	u = PRVALUE(arg.value());
 	dims = getAttrib(u, R_DimSymbol);
 	if (length(dims) == 2) {
 	    dn = getAttrib(u, R_DimNamesSymbol);
@@ -1304,7 +1304,7 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	    if (k >= lenmin && (arg.tag() != R_NilValue ||
 				(deparse_level == 2) ||
 				((deparse_level == 1) &&
-				 isSymbol(substitute(arg.car(),R_NilValue)))))
+				 isSymbol(substitute(arg.value(),R_NilValue)))))
 		have_cnames = TRUE;
 	    nnames = imax2(nnames, length(dn));
 	    UNPROTECT(1); /* dn */
@@ -1318,8 +1318,8 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
     R_xlen_t n = 0; // index, possibly of long vector
 
     if (mode == STRSXP) {
-      for (const auto& arg : args.getArgs()) {
-            u = PRVALUE(arg.car());
+      for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, STRSXP);
 		R_xlen_t k = XLENGTH(u);
@@ -1330,8 +1330,8 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	}
     }
     else if (mode == VECSXP) {
-        for (const auto& arg : args.getArgs()) {
-            u = PRVALUE(arg.car());
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    int umatrix = isMatrix(u); /* might be lost in coercion to VECSXP */
 	    if (umatrix || length(u) >= lenmin) {
 		/* we cannot assume here that coercion will work */
@@ -1368,8 +1368,8 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	}
     }
     else if (mode == CPLXSXP) {
-        for (const auto& arg : args.getArgs()) {
-            u = PRVALUE(arg.car());
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, CPLXSXP);
 		R_xlen_t k = XLENGTH(u);
@@ -1380,8 +1380,8 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	}
     }
     else if (mode == RAWSXP) {
-        for (const auto& arg : args.getArgs()) {
-            u = PRVALUE(arg.car());
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, RAWSXP);
 		R_xlen_t k = XLENGTH(u);
@@ -1392,8 +1392,8 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	}
     }
     else { /* everything else, currently REALSXP, INTSXP, LGLSXP */
-        for (const auto& arg : args.getArgs()) {
-            u = PRVALUE(arg.car()); /* type of u can be any of: RAW, LGL, INT, REAL */
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value()); /* type of u can be any of: RAW, LGL, INT, REAL */
 	    if (isMatrix(u) || length(u) >= lenmin) {
 		R_xlen_t k = XLENGTH(u);
 		R_xlen_t idx = (!isMatrix(u)) ? rows : k;
@@ -1446,8 +1446,8 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
             SET_VECTOR_ELT(dn, 1, nam);
         }
 	int j = 0;
-        for (const auto& arg : args.getArgs()) {
-            u = PRVALUE(arg.car());
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    if (isMatrix(u)) {
 		v = getAttrib(u, R_DimNamesSymbol);
 
@@ -1478,7 +1478,7 @@ static SEXP cbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
                   (*nam)[j++] = const_cast<String*>(
                       SEXP_downcast<const Symbol*>(arg.tag())->name());
 		else {
-                  GCStackRoot<> expr(substitute(arg.car(), R_NilValue));
+		  GCStackRoot<> expr(substitute(arg.value(), R_NilValue));
 		    if (deparse_level == 1 && isSymbol(expr))
 			SET_STRING_ELT(nam, j++, PRINTNAME(expr));
 		    else if (deparse_level == 2) {
@@ -1514,8 +1514,8 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 
     /* check if we are in the zero-cols case */
 
-    for (const auto& arg : args.getArgs()) {
-        u = PRVALUE(arg.car());
+    for (const auto& arg : args) {
+	u = PRVALUE(arg.value());
 	if((isMatrix(u) ? ncols(u) : length(u)) > 0) {
 	    lenmin = 1;
 	    break;
@@ -1525,8 +1525,8 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
     /* check conformability of matrix arguments */
 
     int na = 0;
-    for (const auto& arg : args.getArgs()) {
-	u = PRVALUE(arg.car());
+    for (const auto& arg : args) {
+	u = PRVALUE(arg.value());
 	dims = getAttrib(u, R_DimSymbol);
 	if (length(dims) == 2) {
 	    if (mcols == -1)
@@ -1547,8 +1547,8 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
     /* Check conformability of vector arguments. -- Look for dimnames. */
 
     na = 0;
-    for (const auto& arg : args.getArgs()) {
-	u = PRVALUE(arg.car());
+    for (const auto& arg : args) {
+	u = PRVALUE(arg.value());
 	dims = getAttrib(u, R_DimSymbol);
 	if (length(dims) == 2) {
 	    dn = getAttrib(u, R_DimNamesSymbol);
@@ -1569,7 +1569,7 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	    if (k >= lenmin && (arg.tag() != R_NilValue ||
 				(deparse_level == 2) ||
 				((deparse_level == 1) &&
-				 isSymbol(substitute(arg.car(), R_NilValue)))))
+				 isSymbol(substitute(arg.value(), R_NilValue)))))
 		have_rnames = TRUE;
 	    nnames = imax2(nnames, length(dn));
 	    UNPROTECT(1); /* dn */
@@ -1584,8 +1584,8 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
     R_xlen_t n = 0;
 
     if (mode == STRSXP) {
-	for (const auto& arg : args.getArgs()) {
-	    u = PRVALUE(arg.car());
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, STRSXP);
 		R_xlen_t k = XLENGTH(u);
@@ -1596,8 +1596,8 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	}
     }
     else if (mode == VECSXP) {
-	for (const auto& arg : args.getArgs()) {
-	    u = PRVALUE(arg.car());
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    int umatrix = isMatrix(u), urows = umatrix ? nrows(u) : 1; /* coercing to VECSXP will lose these. PR#15468 */
 	    if (umatrix || length(u) >= lenmin) {
 		PROTECT(u = coerceVector(u, mode));
@@ -1612,8 +1612,8 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	}
     }
     else if (mode == RAWSXP) {
-	for (const auto& arg : args.getArgs()) {
-	    u = PRVALUE(arg.car());
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, RAWSXP);
 		R_xlen_t k = XLENGTH(u);
@@ -1625,8 +1625,8 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	}
     }
     else if (mode == CPLXSXP) {
-	for (const auto& arg : args.getArgs()) {
-	    u = PRVALUE(arg.car());
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    if (isMatrix(u) || length(u) >= lenmin) {
 		u = coerceVector(u, CPLXSXP);
 		R_xlen_t k = XLENGTH(u);
@@ -1638,8 +1638,8 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	}
     }
     else { /* everything else, currently REALSXP, INTSXP, LGLSXP */
-	for (const auto& arg : args.getArgs()) {
-	    u = PRVALUE(arg.car()); /* type of u can be any of: RAW, LGL, INT, REAL */
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value()); /* type of u can be any of: RAW, LGL, INT, REAL */
 	    if (isMatrix(u) || length(u) >= lenmin) {
 		R_xlen_t k = XLENGTH(u);
 		R_xlen_t idx = (isMatrix(u)) ? nrows(u) : (k > 0);
@@ -1684,8 +1684,8 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 	else
 	    nam = R_NilValue;	/* -Wall */
 	int j = 0;
-	for (const auto& arg : args.getArgs()) {
-	    u = PRVALUE(arg.car());
+	for (const auto& arg : args) {
+	    u = PRVALUE(arg.value());
 	    if (isMatrix(u)) {
 		v = getAttrib(u, R_DimNamesSymbol);
 
@@ -1717,9 +1717,9 @@ static SEXP rbind(SEXP call, const ArgList& args, SEXPTYPE mode, SEXP rho,
 
 		if (arg.tag() != R_NilValue)
                     SET_STRING_ELT(nam, j++,
-                                   PRINTNAME(const_cast<SEXP>(arg.tag())));
+				   PRINTNAME(const_cast<Symbol*>(arg.tag())));
 		else {
-                    GCStackRoot<> expr(substitute(arg.car(), R_NilValue));
+		    GCStackRoot<> expr(substitute(arg.value(), R_NilValue));
 		    if (deparse_level == 1 && isSymbol(expr))
 			SET_STRING_ELT(nam, j++, PRINTNAME(expr));
 		    else if (deparse_level == 2) {

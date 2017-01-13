@@ -140,8 +140,6 @@ Frame::Frame(const ArgList& promised_args, size_t num_bindings,
       m_read_monitored(false), m_write_monitored(false), m_overflow(nullptr),
       m_promised_args(promised_args)
 {
-    m_promised_args_protect = m_promised_args.list();
-
     if (check_list_size && num_bindings > kMaxListSize) {
 	size_t overflow_size = num_bindings - kMaxListSize;
 	m_overflow = new map(overflow_size);
@@ -168,7 +166,6 @@ Frame::Frame(const Frame& source)
       m_read_monitored(false), m_write_monitored(false), m_overflow(nullptr),
       m_promised_args(source.m_promised_args)
 {
-    m_promised_args_protect = m_promised_args.list();
     // m_default_arglist isn't copied as any values in there are going to be
     // promoted to a Promise in importBindings().
     m_bindings = new Binding[m_bindings_size];
@@ -278,8 +275,7 @@ void Frame::detachReferents()
     clear();
     m_descriptor.detach();
     m_default_arglist.clear();
-    if (m_promised_args_protect)
-	m_promised_args_protect.detach();
+    m_promised_args.detachReferents();
 }
 
 bool Frame::erase(const Symbol* symbol)
@@ -454,11 +450,10 @@ void Frame::visitReferents(const_visitor* v) const
 	});
     if (m_descriptor)
 	(*v)(m_descriptor);
-    if (m_promised_args_protect)
-	(*v)(m_promised_args_protect);
     for (auto &item : m_default_arglist) {
 	item.visitReferents(v);
     }
+    m_promised_args.visitReferents(v);
 }
 
 void Frame::addDefaultArgument(const Symbol* symbol, const RObject* expression,
