@@ -44,14 +44,6 @@ class Argument {
         m_value = value;
     }
 
-    // NB: when copying Arguments that are wrapped in promises, the promise
-    //  may be duplicated.  Calling code should ensure that only one gets
-    //  evaluated.
-    Argument(const Argument&) = default;
-    Argument(Argument&&) = default;
-    Argument& operator=(const Argument&) = default;
-    Argument& operator=(Argument&&) = default;
-
     const Symbol* tag() const {
         return m_tag;
     }
