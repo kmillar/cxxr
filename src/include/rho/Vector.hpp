@@ -74,8 +74,12 @@ class Vector {
     }
     template<typename ForwardIterator>
     Vector(ForwardIterator first, ForwardIterator last) : Vector() {
-        assign(first, last);
+        size_type n = last - first;
+        reallocateIfNeeded(n);
+        std::uninitialized_copy(first, last, begin());
+        setSize(n);
     }
+
     Vector(std::initializer_list<value_type> values) : Vector() {
         assign(values);
     }
