@@ -274,7 +274,7 @@ void Frame::detachReferents()
 {
     clear();
     m_descriptor.detach();
-    m_default_arglist.clear();
+    m_default_arglist.detachReferents();
     m_promised_args.detachReferents();
 }
 
@@ -450,9 +450,7 @@ void Frame::visitReferents(const_visitor* v) const
 	});
     if (m_descriptor)
 	(*v)(m_descriptor);
-    for (auto &item : m_default_arglist) {
-	item.visitReferents(v);
-    }
+    m_default_arglist.visitReferents(v);
     m_promised_args.visitReferents(v);
 }
 

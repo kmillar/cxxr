@@ -38,6 +38,7 @@
 #include "rho/Promise.hpp"
 #include "rho/Provenance.hpp"
 #include "rho/Symbol.hpp"
+#include "rho/Vector.hpp"
 #include <unordered_map>
 
 namespace rho {
@@ -974,7 +975,7 @@ namespace rho {
 	mutable bool m_write_monitored : 1;
 
         // The default arguments that were added by the argument matching.
-        std::vector<PromiseData> m_default_arglist;
+        Vector<PromiseData> m_default_arglist;
 
         friend class ArgMatcher;
         friend class ArgMatchCache;
