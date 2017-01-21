@@ -36,6 +36,8 @@ void Argument::boxPromise() const {
 
 void Argument::wrapInPromise(Environment* env) {
     assert(!m_is_promise_data);
+    if (m_value == Symbol::missingArgument())
+        return;
     m_promise_data = PromiseData(m_value, env);
     m_is_promise_data = true;
     m_value = nullptr;
