@@ -262,6 +262,8 @@ void Frame::clear()
     for (size_t i = 0; i < m_used_bindings_size; i++) {
 	m_bindings[i].unset();
     }
+    m_used_bindings_size = 0;
+
     if (m_overflow) {
 	delete m_overflow;
 	m_overflow = nullptr;
