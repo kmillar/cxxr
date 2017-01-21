@@ -45,6 +45,7 @@ unit_test_sources = \
 	LogicalTests.cpp \
 	NodeStackTests.cpp \
 	PairListTests.cpp \
+	PromiseTests.cpp \
 	SetTypeofTests.cpp \
 	SubassignTests.cpp \
 	VisibilityTests.cpp \

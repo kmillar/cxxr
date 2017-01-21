@@ -50,6 +50,10 @@ namespace rho {
     }
 }
 
+PromiseData::PromiseData(const PromiseData& source)
+    : PromiseData(source.asPromise())
+{}
+
 PromiseData::PromiseData(const RObject* valgen, Environment* env)
     : m_under_evaluation(false), m_interrupted(false),
       m_is_pointer_to_promise(false)
@@ -65,9 +69,20 @@ PromiseData::PromiseData(Promise* value)
     m_value = value;
 }
 
-Promise* PromiseData::asPromise() {
-    Promise* promise = new Promise(std::move(*this));
-    *this = PromiseData(promise);
+PromiseData& PromiseData::operator=(const PromiseData& source) {
+    m_value = source.asPromise();
+    m_is_pointer_to_promise = true;
+    m_valgen = nullptr;
+    m_environment = nullptr;
+    return *this;
+}
+
+Promise* PromiseData::asPromise() const {
+    if (m_is_pointer_to_promise) {
+	return SEXP_downcast<Promise*>(m_value.get());
+    }
+    Promise* promise = new Promise(std::move(*const_cast<PromiseData*>(this)));
+    *const_cast<PromiseData*>(this) = PromiseData(promise);
     return promise;
 }
 
@@ -108,6 +123,7 @@ RObject* PromiseData::evaluate()
 	}
 	m_under_evaluation = false;
     }
+    assert(!m_is_pointer_to_promise);
     return m_value;
 }
 
@@ -135,6 +151,7 @@ bool PromiseData::isMissingSymbol() const
 		    = static_cast<const Symbol*>(prexpr);
 		m_under_evaluation = true;
 		ans = isMissingArgument(promsym, m_environment->frame());
+
 	    }
 	    catch (...) {
 		m_under_evaluation = false;
@@ -143,11 +160,13 @@ bool PromiseData::isMissingSymbol() const
 	    m_under_evaluation = false;
 	}
     }
+    assert(!m_is_pointer_to_promise);
     return ans;
 }
 
 void PromiseData::setValue(RObject* val)
 {
+    assert(!m_is_pointer_to_promise);
     m_value = val;
     SET_NAMED(val, 2);
     if (val != Symbol::unboundValue())

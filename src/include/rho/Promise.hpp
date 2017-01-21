@@ -72,7 +72,10 @@ namespace rho {
 
 	PromiseData(Promise* value);
 
-	// Default destructor, copy, move and assignment operators are all fine.
+	PromiseData(const PromiseData&);
+	PromiseData& operator=(const PromiseData&);
+	PromiseData(PromiseData&&) = default;
+	PromiseData& operator=(PromiseData&&) = default;
 
 	static PromiseData createEvaluatedPromise(const RObject* expression,
 						  RObject* evaluated_value) {
@@ -86,7 +89,7 @@ namespace rho {
 	 * Moves this object's state into a heap-allocated Promise object and
 	 * return that object.
 	 */
-	Promise* asPromise();
+	Promise* asPromise() const;
 
 	/** @brief Force the Promise.
 	 *

@@ -263,11 +263,12 @@ void ArgList::wrapInPromises(Environment* env,
 	ArgList raw_args(call->tail(), RAW);
 	raw_args.transform(env, [=](Argument& arg, int arg_number) {
 		if (arg_number - 1 > values->size()) {
-	Rf_error(_("dispatch error"));
-    }
+		    Rf_error(_("dispatch error"));
+		}
 		arg.wrapInEvaluatedPromise(values->get(arg_number - 1));
 	    });
 	*this = std::move(raw_args);
+	m_status = PROMISED;
 	return;
     }
     assert(env != nullptr);
