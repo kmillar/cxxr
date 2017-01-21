@@ -1390,7 +1390,7 @@ SEXP attribute_hidden do_slotgets(SEXP call, SEXP op, SEXP args, SEXP env)
     ArgList arglist(SEXP_downcast<PairList*>(args), ArgList::RAW);
     SEXP input;
     
-    SEXP nlist = arglist.get(1);
+    SEXP nlist = arglist[1].value();
     if (isSymbol(nlist))
 	input = Rf_ScalarString(PRINTNAME(nlist));
     else if(isString(nlist)) {
@@ -1405,7 +1405,7 @@ SEXP attribute_hidden do_slotgets(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(input);
     
     /* replace the second argument with a string */
-    arglist.set(1, input);
+    arglist[1].setValue(input);
     UNPROTECT(1); // 'input' is now protected
     
     auto disptached = Rf_DispatchOrEval(SEXP_downcast<Expression*>(call),
@@ -1416,8 +1416,8 @@ SEXP attribute_hidden do_slotgets(SEXP call, SEXP op, SEXP args, SEXP env)
     if (disptached.first)
         return disptached.second;
 
-    RObject* obj = arglist.get(0);
-    RObject* value = arglist.get(2);
+    RObject* obj = arglist[0].value();
+    RObject* value = arglist[2].value();
     check_slot_assign(obj, input, value, env);
     value = R_do_slot_assign(obj, input, value);
     UNPROTECT(2);

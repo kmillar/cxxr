@@ -2086,7 +2086,7 @@ static Rboolean anyNA(const Expression* call, const BuiltInFunction* op,
 	Expression* call2 = new Expression(call->car(), args2);
 	for (i = 0; i < n; i++, x = CDR(x)) {
 	    SETCADR(call2, CAR(x));
-            args2.set(i, CAR(x));
+	    args2[i].setValue(CAR(x));
             auto dispatched = Rf_Dispatch(call2, op, args2, env);
             if (dispatched.first) {
                 if (Rf_asLogical(dispatched.second)) {
@@ -2104,7 +2104,7 @@ static Rboolean anyNA(const Expression* call, const BuiltInFunction* op,
                       ArgList::EVALUATED);
 	Expression* call2 = new Expression(call->car(), args2);
 	for (i = 0; i < n; i++) {
-            args2.set(0, VECTOR_ELT(x, i));
+	    args2[0].setValue(VECTOR_ELT(x, i));
             SETCADR(call2, VECTOR_ELT(x, i));
             auto dispatched = Rf_Dispatch(call2, op, args2, env);
             if (dispatched.first) {
@@ -2145,8 +2145,8 @@ SEXP attribute_hidden do_anyNA(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (arglist.size() == 1) {
 	callx->check1arg("x");
 	bool recursive = false;
- 	return Rf_ScalarLogical(anyNA(callx, func, arglist.get(0), recursive,
-                                      env));
+	return Rf_ScalarLogical(anyNA(callx, func, arglist[0].value(),
+				      recursive, env));
    } else {
 	/* This is a primitive, so we manage argument matching ourselves.
 	   But this takes a little time.

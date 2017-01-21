@@ -198,37 +198,6 @@ namespace rho {
 			     MissingArgHandling allow_missing
 				 = MissingArgHandling::Error) const;
 
-	/** @brief Return the argument at the specified position.
-	 */
-	RObject* get(int position) const {
-	    return (*this)[position].value();
-	}
-
-	/** @brief Set the argument at the specified position.
-	 */
-	void set(int position, RObject* value) {
-	    (*this)[position].setValue(value);
-	}
-
-	/** @brief Return the tag at the specified position.
-	 */
-	const Symbol* getTag(int position) const {
-	    return (*this)[position].tag();
-	}
-
-	/** @brief Set the tag at the specified position.
-	 */
-	void setTag(int position, const Symbol* tag) {
-	    (*this)[position].setTag(tag);
-	}
-
-	/** @brief Remove the argument at the specified position.  Invalidates
-	 *     any existing iterators.
-	 */
-	void erase(int position) {
-	    Vector::erase(begin() + position);
-	}
-
 	/** @brief Access the argument list as a PairList.
 	 *
 	 * @return pointer, possibly null, to the list of arguments.

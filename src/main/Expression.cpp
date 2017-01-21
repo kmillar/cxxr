@@ -197,12 +197,12 @@ RObject* Expression::evaluateFixedArityBuiltIn(const BuiltInFunction* func,
 	return evaluateFixedArityBuiltIn(func, env, tags, evaluated);
 /*  This macro expands out to:
     case 1:
-	return evaluateFixedArityBuiltIn(func, env, tags, evaluated, arglist.get(1));
+	return evaluateFixedArityBuiltIn(func, env, tags, evaluated, arglist[1].value());
     case 2:
-	return evaluateFixedArityBuiltIn(func, env, tags, evaluated, arglist.get(1), arglist.get(2));
+	return evaluateFixedArityBuiltIn(func, env, tags, evaluated, arglist[1].value(), arglist[2].value());
     ...
 */
-#define ARGUMENT_LIST(Z, N, IGNORED) BOOST_PP_COMMA_IF(N) arglist.get(N)
+#define ARGUMENT_LIST(Z, N, IGNORED) BOOST_PP_COMMA_IF(N) arglist[N].value()
 #define CASE_STATEMENT(Z, N, IGNORED)              \
     case N:                                        \
 	return evaluateFixedArityBuiltIn(func, env, tags, evaluated, BOOST_PP_REPEAT(N, ARGUMENT_LIST, 0));
@@ -292,7 +292,7 @@ RObject* Expression::invokeClosure(const Closure* func,
                                    const Frame* method_bindings) const
 {
   return GCStackFrameBoundary::withStackFrameBoundary(
-      [&]() { return invokeClosureImpl(func, calling_env, arglist,
+      [=]() { return invokeClosureImpl(func, calling_env, arglist,
                                        method_bindings); });
 }
 

@@ -93,7 +93,7 @@ static RObject* GetObject(ClosureContext *cptr)
 	const ArgList& args = cptr->promiseArgs();
 	if (args.size() == 0)
 	    return R_NilValue;
-	return forceIfPromise(args.get(0));
+	return forceIfPromise(args[0].value());
     }
 }
 

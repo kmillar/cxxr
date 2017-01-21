@@ -1846,10 +1846,10 @@ Rf_DispatchOrEval(const Expression* call, const BuiltInFunction* func,
     // and that there might be other arguments in the "..." as well.
     // LT
     assert(arglist->status() == ArgList::RAW);
-    if (arglist->size() == 0)
+    if (arglist->empty())
 	return std::make_pair(false, nullptr);
 
-    GCStackRoot<> x(Evaluator::evaluate(arglist->get(0), callenv));
+    GCStackRoot<> x(Evaluator::evaluate((*arglist)[0].value(), callenv));
 
     // try to dispatch on the object
     if (x && x->hasClass()) {
@@ -1857,7 +1857,7 @@ Rf_DispatchOrEval(const Expression* call, const BuiltInFunction* func,
 	if (x->isS4Object() && R_has_methods(func)) {
 	    // create a promise to pass down to applyClosure
 	    arglist->wrapInPromises(callenv, call);
-	    SET_PRVALUE(arglist->get(0), x);
+	    SET_PRVALUE((*arglist)[0].value(), x);
 
 	    /* This means S4 dispatch */
 	    auto pr = R_possible_dispatch(call, func, *arglist, callenv);
@@ -1868,7 +1868,7 @@ Rf_DispatchOrEval(const Expression* call, const BuiltInFunction* func,
 	if (!isDefaultMethod(call)) {
 	    if (arglist->status() != ArgList::PROMISED) {
 		arglist->wrapInPromises(callenv, call);
-		SET_PRVALUE(arglist->get(0), x);
+		SET_PRVALUE((*arglist)[0].value(), x);
 	    }
 	    /* The context set up here is needed because of the way
 	       Rf_usemethod() is written.  Rf_DispatchGroup() repeats some
@@ -1899,14 +1899,14 @@ Rf_DispatchOrEval(const Expression* call, const BuiltInFunction* func,
     }
     // Evaluate the args.  We need to avoid double-evaluating the first
     // argument.
-    if (arglist->get(0) == R_DotsSymbol) {
+    if ((*arglist)[0].value() == R_DotsSymbol) {
 	arglist->wrapInPromises(callenv, call);
-	SET_PRVALUE(arglist->get(0), x);
+	SET_PRVALUE((*arglist)[0].value(), x);
 	arglist->evaluate(callenv, dropmissing);
     } else {
-	arglist->set(0, R_NilValue);
+	(*arglist)[0].setValue(R_NilValue);
 	arglist->evaluate(callenv, dropmissing);
-	arglist->set(0, x);
+	(*arglist)[0].setValue(x);
     }
     return std::make_pair(false, nullptr);
 }
@@ -1920,7 +1920,7 @@ Rf_Dispatch(const Expression* call, const BuiltInFunction* func,
     if (arglist.size() == 0) {
 	return std::make_pair(false, nullptr);
     }
-    GCStackRoot<> x(arglist.get(0));
+    GCStackRoot<> x(arglist[0].value());
 
     // try to dispatch on the object
     if (x && x->hasClass()) {
@@ -1980,8 +1980,8 @@ Rf_DispatchGroup(const char *group, const Expression* call,
     std::size_t numargs = args.size();
     if (numargs == 0)
       return std::make_pair(false, nullptr);
-    RObject* arg1val = args.get(0);
-    RObject* arg2val = (numargs > 1 ? args.get(1) : nullptr);
+    RObject* arg1val = args[0].value();
+    RObject* arg2val = (numargs > 1 ? args[1].value() : nullptr);
 
     /* pre-test to avoid string computations when there is nothing to
        dispatch on because either there is only one argument and it
@@ -2029,7 +2029,7 @@ Rf_DispatchGroup(const char *group, const Expression* call,
 	    SET_NAMED(value, 2);
 	value = R_getS4DataSlot(value, S4SXP); /* the .S3Class obj. or NULL*/
 	if (value) { /* use the S3Part as the inherited object */
-	    args.set(0, value);
+	    args[0].setValue(value);
 	    arg1val = value;
 	}
     }
@@ -2045,7 +2045,7 @@ Rf_DispatchGroup(const char *group, const Expression* call,
 	    SET_NAMED(value, 2);
 	value = R_getS4DataSlot(value, S4SXP);
 	if (value) {
-	    args.set(1, value);
+	    args[1].setValue(value);
 	    arg2val = value;
 	}
     }

@@ -269,7 +269,7 @@ BuiltInFunction::InternalDispatch(const Expression* call,
     RObject** args_array = static_cast<RObject**>(
 	alloca(num_args * sizeof(RObject*)));
     for (int i = 0; i < num_args; i++) {
-	args_array[i] = args.get(i);
+	args_array[i] = args[i].value();
     }
     return InternalDispatch(call, env, num_args, args_array, args.tags());
 }

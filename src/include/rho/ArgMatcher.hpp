@@ -364,7 +364,6 @@ namespace rho {
 
 	// Raise an error because there are unused supplied arguments,
 	// as indicated in supplied_list.
-	static void unusedArgsError(const SuppliedList& supplied_list);
 	static void unusedArgsError(const ConsCell* supplied_list);
 	static void unusedArgsError(ArgList::const_iterator begin,
 				    ArgList::const_iterator end);
@@ -396,11 +395,20 @@ namespace rho {
 		    && m_tags == other.m_tags);
 	}
 
+	// Virtual function of GCNode:
+	void visitReferents(const_visitor* v) const override {
+	    if (m_matcher)
+		(*v)(m_matcher);
+	}
+	void detachReferents() override {
+	    m_matcher.detach();
+	}
+
 	struct Hash;
 
 	// TODO: This should be private.
 	int m_num_formals;
-	const ArgMatcher* m_matcher;
+	GCEdge<const ArgMatcher> m_matcher;
 	std::vector<int> m_values;
 	std::vector<const Symbol*> m_tags;
 

@@ -1352,7 +1352,7 @@ SEXP attribute_hidden do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
     int iS;
 
     ArgList arglist(SEXP_downcast<PairList*>(args), ArgList::RAW);
-    nlist = arglist.get(1);
+    nlist = arglist[1].value();
     if (TYPEOF(nlist) == PROMSXP) {
 	nlist = eval(nlist, env);
     }
@@ -1366,7 +1366,7 @@ SEXP attribute_hidden do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
     }
 
     /* replace the second argument with a string */
-    arglist.set(1, input);
+    arglist[1].setValue(input);
     auto dispatched = Rf_DispatchOrEval(SEXP_downcast<Expression*>(call),
                                         SEXP_downcast<BuiltInFunction*>(op),
                                         &arglist,
@@ -1378,7 +1378,8 @@ SEXP attribute_hidden do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
     if (! iS)
 	nlist = installTrChar(STRING_ELT(input, 0));
 
-    return R_subassign3_dflt(call, arglist.get(0), nlist, arglist.get(2));
+    return R_subassign3_dflt(call, arglist[0].value(), nlist,
+			     arglist[2].value());
 }
 
 /* used in "$<-" (above) and methods_list_dispatch.c */

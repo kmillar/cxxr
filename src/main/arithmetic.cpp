@@ -1002,7 +1002,7 @@ SEXP attribute_hidden do_Math2(SEXP call, SEXP op, SEXP args, SEXP env)
 	double digits = PRIMVAL(op) == 10001 ? 0 : 6;
 	return do_math2(SEXP_downcast<Expression*>(call),
 			SEXP_downcast<const BuiltInFunction*>(op),
-			arglist.get(0), ScalarReal(digits));
+			arglist[0].value(), ScalarReal(digits));
     }
 
     static GCRoot<ArgMatcher> matcher = new ArgMatcher({ "x", "digits" });

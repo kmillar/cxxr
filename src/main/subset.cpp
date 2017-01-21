@@ -886,7 +886,7 @@ SEXP attribute_hidden do_subset3(SEXP call, SEXP op, SEXP args, SEXP env)
     }
 
     UNPROTECT(1); /* input, args */
-    return R_subset3_dflt(arglist.get(0), STRING_ELT(input, 0), call);
+    return R_subset3_dflt(arglist[0].value(), STRING_ELT(input, 0), call);
 }
 
 /* used in eval.c */

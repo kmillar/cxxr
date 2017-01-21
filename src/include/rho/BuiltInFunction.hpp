@@ -562,10 +562,10 @@ namespace rho {
 	    case 0:
 		return false;
 	    case 1:
-		return needsDispatch(evaluated_args.get(0));
+		return needsDispatch(evaluated_args[0].value());
 	    default:
-		return needsDispatch(evaluated_args.get(0),
-				     evaluated_args.get(1));
+		return needsDispatch(evaluated_args[0].value(),
+				     evaluated_args[1].value());
 	    }
 	}
 

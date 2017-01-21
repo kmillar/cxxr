@@ -144,14 +144,14 @@ public:
 	DottedArgs* result = nullptr;
 	ConsCell* dots = nullptr;
 	for (int index : arg_indices) {
-	    RObject* value = all_args.get(index);
-	    const RObject* tag = all_args.getTag(index);
+	    const Argument& arg = all_args[index];
 	    if (dots) {
-		PairList* next_item = new PairList(value, nullptr, tag);
+		PairList* next_item = new PairList(arg.value(), nullptr,
+						   arg.tag());
 		dots->setTail(next_item);
 		dots = next_item;
 	    } else {
-		dots = result = new DottedArgs(value, nullptr, tag);
+		dots = result = new DottedArgs(arg.value(), nullptr, arg.tag());
 	    }
 	}
 	return result;
@@ -167,7 +167,7 @@ void ArgMatcher::matchWithCache(const ArgList& supplied,
 	int sindex = matching->getSindex(findex);
 	if (sindex >= 0) {
 	    // This assumes that random access in an ArgList is O(1).
-	    callback->matchedArgument(fdata, sindex, supplied.get(sindex));
+	    callback->matchedArgument(fdata, sindex, supplied[sindex].value());
 	}
 	else if (fdata.symbol != R_DotsSymbol) {
 	    callback->defaultValue(fdata);
@@ -355,7 +355,7 @@ bool ArgMatchCache::arglistTagsMatch(const ArgList& args) const {
   if (m_tags.size() != args.size())
       return false;
   for (int index = 0; index < m_tags.size(); ++index) {
-      if (m_tags[index] != args.getTag(index))
+      if (m_tags[index] != args[index].tag())
 	    return false;
     }
     return true;
@@ -419,9 +419,9 @@ void ArgMatcher::matchByPosition(const ArgList& supplied,
 	= m_dots_position == -1 ? m_formal_data.size() : m_dots_position;
     unsigned int supplied_index = 0;
     unsigned int formals_index = 0;
-    ArgList::const_iterator s = supplied.begin();
+    ArgList::const_iterator s;
     const ArgList::const_iterator end = supplied.end();
-    for ( ;
+    for (s = supplied.begin();
 	 (s != end) && (formals_index < num_formals);
 	 ++s, ++formals_index, ++supplied_index)
     {

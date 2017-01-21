@@ -1149,13 +1149,13 @@ SEXP attribute_hidden do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
     if (tryS4) {
 	// keep 'deparse.level' as first arg and *name* it:
         static Symbol* deparse_level_symbol = Symbol::obtain("deparse.level");
-        if (!arglist.getTag(0))
-          arglist.setTag(0, deparse_level_symbol);
+	if (!arglist[0].tag())
+	  arglist[0].setTag(deparse_level_symbol);
 	// and use methods:::cbind / rbind
 	method = findFunction(Symbol::obtain(generic),
                               SEXP_downcast<Environment*>(R_MethodsNamespace));
     } else
-      arglist.erase(0); // keeping deparse.level for S4 dispatch
+	arglist.erase(arglist.begin()); // keeping deparse.level for S4 dispatch
     if (method != R_NilValue) { // found an S3 or S4 method
 	return callx->evaluateFunctionCall(method, callenv, arglist);
     }
