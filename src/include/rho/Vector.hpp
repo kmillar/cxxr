@@ -106,9 +106,9 @@ class Vector {
     }
 
     iterator begin() noexcept              { return isSmall()
-            ? reinterpret_cast<iterator>(&m_data.m_storage) : getPointer()->begin(); }
+            ? reinterpret_cast<iterator>(m_data.m_storage) : getPointer()->begin(); }
     const_iterator begin() const noexcept  { return isSmall()
-            ? reinterpret_cast<const_iterator>(&m_data.m_storage)
+            ? reinterpret_cast<const_iterator>(m_data.m_storage)
             : getPointer()->begin(); }
     const_iterator cbegin() const noexcept { return begin(); }
     reverse_iterator rbegin() noexcept     { return reverse_iterator(end()); }
@@ -386,11 +386,13 @@ class Vector {
 
     PointerType& getPointer() noexcept {
         assert(!isSmall());
-        return *reinterpret_cast<PointerType*>(&m_data.m_pointer);
+        char* p = m_data.m_pointer;
+        return *reinterpret_cast<PointerType*>(p);
     }
     const PointerType& getPointer() const noexcept {
         assert(!isSmall());
-        return *reinterpret_cast<const PointerType*>(&m_data.m_pointer);
+        const char* p = m_data.m_pointer;
+        return *reinterpret_cast<const PointerType*>(p);
     }
     void setPointer(VariableLengthArray<T>* data) {
         assert(m_size == data->size());

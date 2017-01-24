@@ -265,7 +265,7 @@ void ArgList::wrapInPromises(Environment* env,
 		if (arg_number - 1 > values->size()) {
 		    Rf_error(_("dispatch error"));
 		}
-		arg.wrapInEvaluatedPromise(values->get(arg_number - 1));
+		arg.wrapInEvaluatedPromise((*values)[arg_number - 1].value());
 	    });
 	*this = std::move(raw_args);
 	m_status = PROMISED;
