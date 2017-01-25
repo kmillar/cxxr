@@ -185,12 +185,12 @@ namespace rho {
 	template<typename... Args>
 	RObject* evaluateBuiltInWithEvaluatedArgs(const BuiltInFunction*,
 						  Environment*,
-						  const PairList*,
+						  const ArgList&,
 						  Args...) const;
 	template<typename... Args>
 	RObject* evaluateFixedArityBuiltIn(const BuiltInFunction*,
 					   Environment*,
-					   const PairList*,
+					   const ArgList&,
 					   bool evaluated,
 					   Args...) const;
 	RObject* evaluateFixedArityBuiltIn(const BuiltInFunction*,

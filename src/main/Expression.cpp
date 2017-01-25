@@ -195,7 +195,7 @@ static void prepareToInvokeBuiltIn(const BuiltInFunction* func)
 template<typename... Args>
 RObject* Expression::evaluateBuiltInWithEvaluatedArgs(const BuiltInFunction* func,
 						      Environment* env,
-						      const PairList* tags,
+						      const ArgList& tags,
 						      Args... args) const
 {
     prepareToInvokeBuiltIn(func);
@@ -203,7 +203,7 @@ RObject* Expression::evaluateBuiltInWithEvaluatedArgs(const BuiltInFunction* fun
 }
 
 template<typename... Args>
-RObject* Expression::evaluateFixedArityBuiltIn(const BuiltInFunction* fun, Environment* env, const PairList* tags, bool evaluated, Args... args) const
+RObject* Expression::evaluateFixedArityBuiltIn(const BuiltInFunction* fun, Environment* env, const ArgList& tags, bool evaluated, Args... args) const
 {
     if (evaluated) {
 	return evaluateBuiltInWithEvaluatedArgs(fun, env, tags, args...);
@@ -217,7 +217,7 @@ RObject* Expression::evaluateFixedArityBuiltIn(const BuiltInFunction* func,
 					       const ArgList& arglist) const
 {
     bool evaluated = arglist.status() == ArgList::EVALUATED;
-    const PairList* tags = arglist.tags();
+    const ArgList& tags = arglist;
     switch(func->arity()) {
     case 0:
 	return evaluateFixedArityBuiltIn(func, env, tags, evaluated);
