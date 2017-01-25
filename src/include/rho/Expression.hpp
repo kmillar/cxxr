@@ -161,6 +161,8 @@ namespace rho {
 
         FunctionBase* getFunction(Environment* env) const;
 
+	RObject* applySpecial(const BuiltInFunction* func,
+			      Environment* env) const;
         RObject* invokeClosureImpl(const Closure* func,
                                    Environment* calling_env,
                                    const ArgList& arglist,
@@ -177,6 +179,8 @@ namespace rho {
 	RObject* evaluateIndirectBuiltInCall(const BuiltInFunction* func,
                                              Environment* env,
                                              const ArgList& arglist) const;
+	RObject* evaluateSpecialCall(const BuiltInFunction* func,
+				     Environment* env) const;
 
 	template<typename... Args>
 	RObject* evaluateBuiltInWithEvaluatedArgs(const BuiltInFunction*,

@@ -108,6 +108,11 @@ RObject* Expression::evaluate(Environment* env)
     ProtectStack::Scope ps_scope;
 
     FunctionBase* function = getFunction(env);
+    if (function->sexptype() == SPECIALSXP) {
+	BuiltInFunction* builtin = static_cast<BuiltInFunction*>(function);
+	if (!(builtin->hasDirectCall() || builtin->hasFixedArityCall()))
+	    return applySpecial(static_cast<BuiltInFunction*>(function), env);
+    }
 
     ArgList arglist(tail(), ArgList::RAW);
     return evaluateFunctionCall(function, env, arglist);
@@ -146,6 +151,27 @@ RObject* Expression::applyBuiltIn(const BuiltInFunction* builtin,
     if (builtin->printHandling() != BuiltInFunction::SOFT_ON) {
 	Evaluator::enableResultPrinting(
             builtin->printHandling() != BuiltInFunction::FORCE_OFF);
+    }
+    return result;
+}
+
+RObject* Expression::applySpecial(const BuiltInFunction* function,
+				  Environment* env) const
+{
+    RObject* result;
+    function->maybeTrace(this);
+
+    if (function->createsStackFrame()) {
+	FunctionContext context(this, env, function);
+	result = evaluateSpecialCall(function, env);
+    } else {
+	PlainContext context;
+	result = evaluateSpecialCall(function, env);
+    }
+
+    if (function->printHandling() != BuiltInFunction::SOFT_ON) {
+	Evaluator::enableResultPrinting(
+	    function->printHandling() != BuiltInFunction::FORCE_OFF);
     }
     return result;
 }
@@ -284,6 +310,23 @@ RObject* Expression::evaluateIndirectBuiltInCall(
 
     prepareToInvokeBuiltIn(func);
     return func->invoke(this, env, arglist);
+}
+
+RObject* Expression::evaluateSpecialCall(const BuiltInFunction* func,
+					 Environment* env) const
+{
+    // Check the number of arguments.
+    int num_args = listLength(getArgs());
+    func->checkNumArgs(num_args, this);
+
+    // Check that any naming requirements on the first arg are satisfied.
+    const char* first_arg_name = func->getFirstArgName();
+    if (first_arg_name) {
+	check1arg(first_arg_name);
+    }
+
+    prepareToInvokeBuiltIn(func);
+    return func->invokeSpecial(this, env, getArgs());
 }
 
 RObject* Expression::invokeClosure(const Closure* func,
