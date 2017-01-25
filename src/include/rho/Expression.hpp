@@ -205,6 +205,10 @@ namespace rho {
 					      const ArgList& arglist,
 					      Environment* execution_env) const;
 
+      private:
+	template<typename... EvaluatedArgs>
+	struct EvalArgsAndCall;
+
 	Expression& operator=(const Expression&) = delete;
     };
 

@@ -192,6 +192,36 @@ static void prepareToInvokeBuiltIn(const BuiltInFunction* func)
 #endif
 }
 
+// We can't call simply do:
+//   evaluateBuiltInWithEvaluatedArgs(fun, env, tags,
+//                                    (args ? args->evaluate(env) : nullptr)...)
+// because C++ doesn't define the order in which the arguments will be evaluated.
+// This template works around that, evaluating the args one at a time and
+// forwarding the evaluated args to the function.
+template<typename... EvaluatedArgs>
+struct Expression::EvalArgsAndCall {
+    template<typename... UnevaluatedArgs>
+    static RObject* evaluate(const BuiltInFunction* fun, const Expression* call,
+			     Environment* env, const ArgList& tags,
+			     EvaluatedArgs... evaluated_args,
+			     RObject* arg,
+			     UnevaluatedArgs... unevaluated_args)
+    {
+	return EvalArgsAndCall<EvaluatedArgs..., RObject*>
+	    ::evaluate(fun, call, env, tags,
+		       evaluated_args...,
+		       arg ? arg->evaluate(env) : nullptr,
+		       unevaluated_args...);
+    }
+
+    static RObject* evaluate(const BuiltInFunction* fun, const Expression* call,
+			     Environment* env, const ArgList& tags,
+			     EvaluatedArgs... evaluated_args) {
+	return call->evaluateBuiltInWithEvaluatedArgs(fun, env, tags,
+						      evaluated_args...);
+    }
+};
+
 template<typename... Args>
 RObject* Expression::evaluateBuiltInWithEvaluatedArgs(const BuiltInFunction* func,
 						      Environment* env,
@@ -208,8 +238,7 @@ RObject* Expression::evaluateFixedArityBuiltIn(const BuiltInFunction* fun, Envir
     if (evaluated) {
 	return evaluateBuiltInWithEvaluatedArgs(fun, env, tags, args...);
     }
-    return evaluateBuiltInWithEvaluatedArgs(fun, env, tags,
-	(args ? args->evaluate(env) : nullptr)...);
+    return EvalArgsAndCall<>::evaluate(fun, this, env, tags, args...);
 }
 
 RObject* Expression::evaluateFixedArityBuiltIn(const BuiltInFunction* func,
