@@ -316,7 +316,7 @@ class Vector {
     iterator emplace(const_iterator pos, Args&&... args) {
         if (pos == end()) {
             emplace_back(std::forward<Args>(args)...);
-            return;
+            return end() - 1;
         }
         size_type offset = pos - begin();
         reallocateIfNeeded(size() + 1);
@@ -325,6 +325,7 @@ class Vector {
         moveElementsForward(pos, end(), pos + 1);
         *pos = value_type(std::forward<Args>(args)...);
         setSize(size() + 1);
+        return pos;
     }
 
     template<typename... Args>
