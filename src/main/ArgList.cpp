@@ -61,8 +61,10 @@ static DottedArgs* getDottedArgs(Environment* env)
 ArgList::ArgList(const PairList* args, Status status)
     : m_status(status)
 {
-    for (const auto& arg : *args) {
-	emplace_back(SEXP_downcast<const Symbol*>(arg.tag()), arg.car());
+    if (args) {
+	for (const auto& arg : *args) {
+	    emplace_back(SEXP_downcast<const Symbol*>(arg.tag()), arg.car());
+	}
     }
 }
 
