@@ -107,9 +107,10 @@ static R_StringBuffer cbuff = {nullptr, 0, MAXELTSIZE};
 /* Most are vectorized */
 
 /* primitive */
-SEXP attribute_hidden do_nzchar(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_nzchar(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
     SEXP x, ans;
+    size_t num_args = args.size();
 
     // checkArity(op, args);  .Primitive()  &  may have 1 or 2 args now
     if (num_args < 1 || num_args > 2)
@@ -119,7 +120,7 @@ SEXP attribute_hidden do_nzchar(/*const*/ Expression* call, const BuiltInFunctio
 			   (unsigned long) num_args),
 		  num_args, op->name(), 1, 2);
     call->check1arg("x");
-    x = args[0];
+    x = args[0].value();
 
     if (isFactor(x))
 	error(_("'%s' requires a character vector"), "nzchar()");
@@ -129,7 +130,7 @@ SEXP attribute_hidden do_nzchar(/*const*/ Expression* call, const BuiltInFunctio
 
     int keepNA = FALSE; // the default
     if(num_args > 1) {
-	keepNA = asLogical(args[1]);
+	keepNA = asLogical(args[1].value());
 	if (keepNA == NA_LOGICAL) keepNA = FALSE;
     }
     R_xlen_t i, len = XLENGTH(x);

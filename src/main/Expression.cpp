@@ -275,16 +275,11 @@ RObject* Expression::evaluateDirectBuiltInCall(
 	return evaluateFixedArityBuiltIn(func, env, arglist);
     }
 
-    // Create an array on stack to write arguments to.
-    RObject** evaluated_arg_array = (RObject**)alloca(
-        num_evaluated_args * sizeof(RObject*));
-
-    // Copy the arguments to the stack, evaluating if necessary.
-    arglist.evaluateToArray(env, num_evaluated_args, evaluated_arg_array);
+    ArgList evaluated_args(arglist);
+    evaluated_args.evaluate(env);
 
     prepareToInvokeBuiltIn(func);
-    return func->invoke(this, env, evaluated_arg_array, num_evaluated_args,
-                        arglist.tags());
+    return func->invoke(this, env, evaluated_args);
 }
 
 RObject* Expression::evaluateIndirectBuiltInCall(

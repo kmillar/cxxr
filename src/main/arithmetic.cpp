@@ -293,18 +293,16 @@ static R_INLINE SEXP ScalarValue2(SEXP x, SEXP y)
 RObject* attribute_hidden do_arith(/*const*/ Expression* call_,
 				   const BuiltInFunction* op_,
 				   Environment* env,
-				   RObject* const* args,
-				   int num_args,
-				   const PairList* tags)
+				   const ArgList& args)
 {
     Expression* call = const_cast<Expression*>(call_);
     BuiltInFunction* op = const_cast<BuiltInFunction*>(op_);
 
-    switch(num_args) {
+    switch(args.size()) {
     case 1:
-	return R_unary(call, op, args[0]);
+	return R_unary(call, op, args[0].value());
     case 2:
-	return R_binary(call, op, args[0], args[1]);
+	return R_binary(call, op, args[0].value(), args[1].value());
     default:
 	errorcall(call, _("operator needs one or two arguments"));
     }
@@ -775,10 +773,10 @@ SEXP attribute_hidden do_math1(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* methods are allowed to have more than one arg */
-SEXP attribute_hidden do_trunc(/*const*/ Expression* call, const BuiltInFunction* op, Environment* env, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_trunc(/*const*/ Expression* call, const BuiltInFunction* op, Environment* env, const ArgList& args)
 {
     call->check1arg("x"); // Checked _after_ internal dispatch.
-    SEXP arg = num_args > 0 ? args[0] : R_NilValue;
+    SEXP arg = args.size() > 0 ? args[0].value() : R_NilValue;
     if (isComplex(arg))
 	errorcall(call, _("unimplemented complex function"));
     return math1(arg, trunc, call);
@@ -1015,7 +1013,7 @@ SEXP attribute_hidden do_Math2(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* log{2,10} are builtins */
-SEXP attribute_hidden do_log1arg(/*const*/ Expression* call, const BuiltInFunction* op, Environment* env, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_log1arg(/*const*/ Expression* call, const BuiltInFunction* op, Environment* env, const ArgList& args)
 {
     SEXP tmp = R_NilValue /* -Wall */;
 
@@ -1023,18 +1021,18 @@ SEXP attribute_hidden do_log1arg(/*const*/ Expression* call, const BuiltInFuncti
     if(op->variant() == 2)  tmp = ScalarReal(2.0);
 
     static RObject* log_symbol = Symbol::obtain("log");
-    ArgList arglist2({ args[0], tmp }, ArgList::EVALUATED);
+    ArgList arglist2({ args[0].value(), tmp }, ArgList::EVALUATED);
     Expression* call2 = new Expression(log_symbol, arglist2);
     auto dispatch = op->InternalDispatch(call2, env, arglist2);
     if (dispatch.first) {
 	return dispatch.second;
     }
 
-    if (isComplex(args[0]))
+    if (isComplex(args[0].value()))
       return BuiltInFunction::callBuiltInWithCApi(complex_math2,
                                                   call2, op, arglist2, env);
     else
-	return math2(args[0], tmp, logbase, call);
+	return math2(args[0].value(), tmp, logbase, call);
 }
 
 #ifdef M_E

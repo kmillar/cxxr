@@ -1054,10 +1054,10 @@ Rboolean isMethodsDispatchOn(void)
    It seems it is not currently called with onOff = TRUE (and would
    not have worked prior to 3.0.2).
 */ 
-SEXP attribute_hidden do_S4on(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_S4on(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
-    if(num_args == 0) return Rf_ScalarLogical(isMethodsDispatchOn());
-    return R_isMethodsDispatchOn(args[0]);
+    if(args.size() == 0) return Rf_ScalarLogical(isMethodsDispatchOn());
+    return R_isMethodsDispatchOn(args[0].value());
 }
 
 
@@ -1104,11 +1104,11 @@ static SEXP dispatchNonGeneric(SEXP name, SEXP env, SEXP fdef)
 }
 
 
-static SEXP get_this_generic(RObject* const* args, int num_args);
+static SEXP get_this_generic(const ArgList& args);
 
 
 
-SEXP attribute_hidden do_standardGeneric(/*const*/ Expression* call, const BuiltInFunction* op, Environment* env, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_standardGeneric(/*const*/ Expression* call, const BuiltInFunction* op, Environment* env, const ArgList& args)
 {
     SEXP arg, value, fdef; R_stdGen_ptr_t ptr = R_get_standardGeneric_ptr();
 
@@ -1119,14 +1119,14 @@ SEXP attribute_hidden do_standardGeneric(/*const*/ Expression* call, const Built
 	ptr = R_get_standardGeneric_ptr();
     }
 
-    if (num_args == 0 || !Rf_isValidStringF(args[0]))
+    if (args.size() == 0 || !Rf_isValidStringF(args[0].value()))
 	Rf_errorcall(call,
 		  _("argument to 'standardGeneric' must be a non-empty character string"));
 
     call->check1arg("f");
-    arg = args[0];
+    arg = args[0].value();
 
-    PROTECT(fdef = get_this_generic(args, num_args));
+    PROTECT(fdef = get_this_generic(args));
 
     if(Rf_isNull(fdef))
 	Rf_error(_("call to standardGeneric(\"%s\") apparently not from the body of that generic function"), Rf_translateChar(STRING_ELT(arg, 0)));
@@ -1327,7 +1327,7 @@ static SEXP get_primitive_methods(const BuiltInFunction* op, SEXP rho)
 the call to standardGeneric(), or for primitives, passed as the second
 argument to standardGeneric.
 */
-static SEXP get_this_generic(RObject* const* args, int num_args)
+static SEXP get_this_generic(const ArgList& args)
 {
     const void *vmax = vmaxget();
     SEXP value = R_NilValue; static GCRoot<> gen_name;
@@ -1336,15 +1336,15 @@ static SEXP get_this_generic(RObject* const* args, int num_args)
     const char *fname;
 
     /* a second argument to the call, if any, is taken as the function */
-    if (num_args > 1) {
-	return args[1];
+    if (args.size() > 1) {
+	return args[1].value();
     }
     /* else use sys.function (this is fairly expensive-- would be good
      * to force a second argument if possible) */
     if(!gen_name)
 	gen_name = Rf_install("generic");
     cptr = ClosureContext::innermost();
-    fname = Rf_translateChar(Rf_asChar(args[0]));
+    fname = Rf_translateChar(Rf_asChar(args[0].value()));
     n = Rf_framedepth(cptr);
     /* check for a matching "generic" slot */
     for(i=0;  i<n; i++) {

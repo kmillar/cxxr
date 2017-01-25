@@ -81,7 +81,7 @@ static Rboolean checkfmt(const char *fmt, const char *pattern)
     : translateChar(STRING_ELT(_STR_, _i_)))
 
 
-SEXP attribute_hidden do_sprintf(/*const*/ rho::Expression* call, const rho::BuiltInFunction* op, rho::Environment* env, rho::RObject* const* args, int num_args, const rho::PairList* tags)
+SEXP attribute_hidden do_sprintf(/*const*/ rho::Expression* call, const rho::BuiltInFunction* op, rho::Environment* env, const rho::ArgList& args)
 {
     int i, nargs, cnt, v, thislen, nfmt, nprotect = 0;
     /* fmt2 is a copy of fmt with '*' expanded.
@@ -104,21 +104,21 @@ SEXP attribute_hidden do_sprintf(/*const*/ rho::Expression* call, const rho::Bui
 		  nc, MAXLINE);						\
     }
 
-    nargs = num_args;
+    nargs = args.size();
     /* grab the format string */
-    format = num_args ? args[0] : nullptr;
+    format = nargs ? args[0].value() : nullptr;
     if (!isString(format))
 	error(_("'fmt' is not a character vector"));
     nfmt = length(format);
     if (nfmt == 0) return allocVector(STRSXP, 0);
-    args = (args + 1); nargs--;
+    nargs--;
     if(nargs >= MAXNARGS)
 	error(_("only %d arguments are allowed"), MAXNARGS);
 
     /* record the args for possible coercion and later re-ordering */
-    for(i = 0; i < nargs; i++, args = (args + 1)) {
+    for(i = 0; i < nargs; i++) {
 	SEXPTYPE t_ai;
-	a[i] = args[0];
+	a[i] = args[i + 1].value();
 	if((t_ai = TYPEOF(a[i])) == LANGSXP || t_ai == SYMSXP) /* << maybe add more .. */
 	    error(_("invalid type of argument[%d]: '%s'"),
 		  i+1, CHAR(type2str(t_ai)));

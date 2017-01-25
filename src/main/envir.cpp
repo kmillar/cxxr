@@ -822,7 +822,7 @@ SEXP attribute_hidden do_remove(/*const*/ Expression* call, const BuiltInFunctio
 
 */
 
-SEXP attribute_hidden do_get(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_get(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
     SEXP rval, genv, t1 = R_NilValue;
     SEXPTYPE gmode;
@@ -831,19 +831,19 @@ SEXP attribute_hidden do_get(/*const*/ Expression* call, const BuiltInFunction* 
     /* The first arg is the object name */
     /* It must be present and a non-empty string */
 
-    if (!isValidStringF(args[0]))
+    if (!isValidStringF(args[0].value()))
 	error(_("invalid first argument"));
     else
-	t1 = installTrChar(STRING_ELT(args[0], 0));
+	t1 = installTrChar(STRING_ELT(args[0].value(), 0));
 
     /* envir :	originally, the "where=" argument */
 
-    if (TYPEOF(args[1]) == REALSXP || TYPEOF(args[1]) == INTSXP) {
-	where = asInteger(args[1]);
+    if (TYPEOF(args[1].value()) == REALSXP || TYPEOF(args[1].value()) == INTSXP) {
+	where = asInteger(args[1].value());
 	genv = R_sysframe(where, ClosureContext::innermost());
     }
     else {
-	genv = simple_as_environment(args[1]);
+	genv = simple_as_environment(args[1].value());
 	if (!genv)
 	    error(_("invalid '%s' argument"), "envir");
     }
@@ -854,17 +854,17 @@ SEXP attribute_hidden do_get(/*const*/ Expression* call, const BuiltInFunction* 
        storage.mode.
     */
 
-    if (isString(args[2])) {
-	if (!strcmp(CHAR(STRING_ELT(args[2], 0)), "function")) /* ASCII */
+    if (isString(args[2].value())) {
+	if (!strcmp(CHAR(STRING_ELT(args[2].value(), 0)), "function")) /* ASCII */
 	    gmode = FUNSXP;
 	else
-	    gmode = str2type(CHAR(STRING_ELT(args[2], 0))); /* ASCII */
+	    gmode = str2type(CHAR(STRING_ELT(args[2].value(), 0))); /* ASCII */
     } else {
 	error(_("invalid '%s' argument"), "mode");
 	gmode = FUNSXP;/* -Wall */
     }
 
-    ginherits = asLogical(args[3]);
+    ginherits = asLogical(args[3].value());
     if (ginherits == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "inherits");
 
@@ -885,7 +885,7 @@ SEXP attribute_hidden do_get(/*const*/ Expression* call, const BuiltInFunction* 
 	    else
 		error(_("object '%s' of mode '%s' was not found"),
 		      CHAR(PRINTNAME(t1)),
-		      CHAR(STRING_ELT(args[2], 0))); /* ASCII */
+		      CHAR(STRING_ELT(args[2].value(), 0))); /* ASCII */
 	}
 
 #     define GET_VALUE(rval)				\
@@ -901,7 +901,7 @@ SEXP attribute_hidden do_get(/*const*/ Expression* call, const BuiltInFunction* 
 
     case 2: // get0(.)
 	if (rval == R_UnboundValue)
-	    return args[4];// i.e.  value_if_not_exists
+	    return args[4].value();// i.e.  value_if_not_exists
 	GET_VALUE(rval);
 	break;
     }

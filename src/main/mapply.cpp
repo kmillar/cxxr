@@ -35,9 +35,10 @@
 using namespace rho;
 
 SEXP attribute_hidden
-do_mapply(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+do_mapply(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
-    SEXP f = args[0], varyingArgs = args[1], constantArgs = args[2];
+    SEXP f = args[0].value(), varyingArgs = args[1].value(),
+	constantArgs = args[2].value();
     int m, zero = 0;
     R_xlen_t *lengths, *counters, longest = 0;
 

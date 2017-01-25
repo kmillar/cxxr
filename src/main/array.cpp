@@ -320,11 +320,9 @@ SEXP attribute_hidden do_drop(/*const*/ Expression* call, const BuiltInFunction*
 
 /* Length of Primitive Objects */
 
-SEXP attribute_hidden do_length(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_length(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
-    SEXP x = args[0];
-
-    auto dispatched = op->InternalDispatch(call, rho, num_args, args, tags);
+    auto dispatched = op->InternalDispatch(call, rho, args);
     if (dispatched.first) {
 	RObject* ans = dispatched.second;
 	if (length(ans) == 1 && TYPEOF(ans) == REALSXP) {
@@ -336,6 +334,8 @@ SEXP attribute_hidden do_length(/*const*/ Expression* call, const BuiltInFunctio
 	return(ans);
     }
 
+
+    SEXP x = args[0].value();
 
 #ifdef LONG_VECTOR_SUPPORT
     // or use IS_LONG_VEC
@@ -389,12 +389,12 @@ static SEXP do_lengths_long(SEXP x, Expression* call, Environment* rho)
     return ans;
 }
 
-SEXP attribute_hidden do_lengths(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_lengths(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
-    SEXP x = args[0], ans;
+    SEXP x = args[0].value(), ans;
     R_xlen_t x_len, i;
     int *ans_elt;
-    int useNames = asLogical(args[1]);
+    int useNames = asLogical(args[1].value());
     if (useNames == NA_LOGICAL)
 	error(_("invalid '%s' value"), "use.names");
     bool isList = isVectorList(x) || isS4(x);

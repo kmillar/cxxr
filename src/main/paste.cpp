@@ -59,7 +59,7 @@ static R_StringBuffer cbuff = {nullptr, 0, MAXELTSIZE};
 /* Note that NA_STRING is not handled separately here.  This is
    deliberate -- see ?paste -- and implicitly coerces it to "NA"
 */
-SEXP attribute_hidden do_paste(/*const*/ rho::Expression* call, const rho::BuiltInFunction* op, rho::Environment* env, rho::RObject* const* args, int num_args, const rho::PairList* tags)
+SEXP attribute_hidden do_paste(/*const*/ rho::Expression* call, const rho::BuiltInFunction* op, rho::Environment* env, const rho::ArgList& args)
 {
     SEXP ans, collapse, sep, x;
     int sepw, u_sepw;
@@ -78,13 +78,13 @@ SEXP attribute_hidden do_paste(/*const*/ rho::Expression* call, const rho::Built
 
     /* Check the arguments */
 
-    x = args[0];
+    x = args[0].value();
     if (!isVectorList(x))
 	error(_("invalid first argument"));
     nx = xlength(x);
 
     if(use_sep) { /* paste(..., sep, .) */
-	sep = args[1];
+	sep = args[1].value();
 	if (!isString(sep) || LENGTH(sep) <= 0 || STRING_ELT(sep, 0) == NA_STRING)
 	    error(_("invalid separator"));
 	sep = STRING_ELT(sep, 0);
@@ -94,10 +94,10 @@ SEXP attribute_hidden do_paste(/*const*/ rho::Expression* call, const rho::Built
 	sepKnown = ENC_KNOWN(sep) > 0;
 	sepUTF8 = IS_UTF8(sep);
 	sepBytes = IS_BYTES(sep);
-	collapse = args[2];
+	collapse = args[2].value();
     } else { /* paste0(..., .) */
 	u_sepw = sepw = 0; sep = R_NilValue;/* -Wall */
-	collapse = args[1];
+	collapse = args[1].value();
     }
     if (!isNull(collapse))
 	if(!isString(collapse) || LENGTH(collapse) <= 0 ||

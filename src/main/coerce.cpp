@@ -1360,7 +1360,7 @@ SEXP Rf_asCharacterFactor(SEXP x)
 }
 
 
-SEXP attribute_hidden do_asatomic(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_asatomic(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
     SEXP ans, x;
 
@@ -1381,10 +1381,10 @@ SEXP attribute_hidden do_asatomic(/*const*/ Expression* call, const BuiltInFunct
     }
 
     if (type == RAWSXP) {
-	op->checkNumArgs(num_args, 1, call);
+	op->checkNumArgs(args.size(), 1, call);
     }
 
-    x = num_args ? args[0] : nullptr;
+    x = args.size() ? args[0].value() : nullptr;
     if(TYPEOF(x) == type) {
 	if(ATTRIB(x) == R_NilValue) return x;
 	ans = MAYBE_REFERENCED(x) ? Rf_duplicate(x) : x;

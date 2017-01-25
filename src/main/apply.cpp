@@ -315,19 +315,19 @@ static SEXP do_one(SEXP X, SEXP FUN, SEXP classes, SEXP deflt,
     else return lazy_duplicate(deflt);
 }
 
-SEXP attribute_hidden do_rapply(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_rapply(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
     SEXP X, FUN, classes, deflt, how, ans, names;
     int i, n;
     Rboolean replace;
 
-    X = args[0]; args = (args + 1);
-    FUN = args[0]; args = (args + 1);
+    X = args[0].value();
+    FUN = args[1].value();
     if(!isFunction(FUN)) error(_("invalid '%s' argument"), "f");
-    classes = args[0]; args = (args + 1);
+    classes = args[2].value();
     if(!isString(classes)) error(_("invalid '%s' argument"), "classes");
-    deflt = args[0]; args = (args + 1);
-    how = args[0];
+    deflt = args[3].value();
+    how = args[4].value();
     if(!isString(how)) error(_("invalid '%s' argument"), "how");
     replace = RHOCONSTRUCT(Rboolean, strcmp(CHAR(STRING_ELT(how, 0)), "replace") == 0); /* ASCII */
     n = Rf_length(X);

@@ -333,30 +333,13 @@ namespace rho {
 		    return dispatched.second;
 	    }
 
-	    assert(m_function);
+	    if (m_function)
             return callBuiltInWithCApi(m_function, call, this, args, env);
-        }
-
-        RObject* invoke(const Expression* call, Environment* env,
-                        RObject* const* args, int num_args,
-                        const PairList* tags) const {
-	    // Handle internal generic functions.
-	    static BuiltInFunction* length_fn
-		= BuiltInFunction::obtainPrimitive("length");
-	    if (needsDispatch(num_args, args)
-		&& sexptype() == BUILTINSXP
-		&& !isSummaryGroupGeneric()
-		&& this != length_fn)
-	    {
-		auto dispatched = RealInternalDispatch(call, num_args, args,
-						       tags, env);
-		if (dispatched.first)
-		    return dispatched.second;
-	    }
-	    
+	    else {
             assert(m_quick_function);
             return m_quick_function(const_cast<Expression*>(call),
-                                    this, env, args, num_args, tags);
+					this, env, args);
+	    }
         }
 
 	template<typename... Args>
@@ -462,9 +445,7 @@ namespace rho {
         typedef RObject*(*QuickInvokeFunction)(/*const*/ Expression* call,
 					       const BuiltInFunction* op,
 					       Environment* env,
-					       RObject* const* args,
-					       int num_args,
-					       const PairList* tags);
+					       const ArgList& arg);
 
 	// Placeholder for fuctions that takes the arguments as normal C
 	// function arguments.

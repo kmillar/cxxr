@@ -211,18 +211,18 @@ SEXP attribute_hidden do_provCommand (/*const*/ Expression* call, const BuiltInF
 }
 
 SEXP attribute_hidden
-do_provenance_graph(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+do_provenance_graph(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
 #ifndef PROVENANCE_TRACKING
     Rf_error(_("provenance tracking not implemented in this build"));
     return nullptr;
 #else
-    int nargs = num_args;
+    int nargs = args.size();
     if (nargs != 1)
 	Rf_error(_("%d arguments passed to 'provenance.graph' which requires 1"),
 		 nargs);
     // SEXP arg1 = CAR((RObject*) args);
-    const RObject* arg1 = args[0];
+    const RObject* arg1 = args[0].value();
     if (!arg1 || arg1->sexptype() != STRSXP)
 	    Rf_error(_("invalid 'names' argument"));
 

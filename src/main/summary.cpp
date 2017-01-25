@@ -934,27 +934,26 @@ SEXP attribute_hidden do_which(/*const*/ Expression* call, const BuiltInFunction
 /* op = 0 is pmin, op = 1 is pmax
    NULL and logicals are handled as if they had been coerced to integer.
  */
-SEXP attribute_hidden do_pmin(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_pmin(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
     SEXP x, ans;
     int narm;
     R_xlen_t i, n, len, i1;
     SEXPTYPE type, anstype;
+    size_t num_args = args.size();
 
     // Remove narm from the args.
     assert(num_args >= 1);
-    narm = asLogical(args[0]);
+    narm = asLogical(args[0].value());
     if(narm == NA_LOGICAL)
 	error(_("invalid '%s' value"), "na.rm");
     if(num_args < 2) error(_("no arguments"));
-    args = (args + 1);
-    num_args = num_args - 1;
 
     // Check that the types are valid and get the max length.
-    len = xlength(args[0]);
-    anstype = TYPEOF(args[0]);
-    for (int arg = 0; arg < num_args; arg++) {
-	x = args[arg];
+    len = xlength(args[1].value());
+    anstype = TYPEOF(args[1].value());
+    for (int arg = 1; arg < num_args; arg++) {
+	x = args[arg].value();
 	type = TYPEOF(x);
 	switch(type) {
 	case NILSXP:
@@ -976,14 +975,14 @@ SEXP attribute_hidden do_pmin(/*const*/ Expression* call, const BuiltInFunction*
 	len = imax2(len, n);
     }
 
-    if (num_args == 1)
-	return args[0]; /* one input */
+    if (num_args == 2)
+	return args[1].value(); /* one input */
 
     if(anstype < INTSXP) anstype = INTSXP;
     if(len == 0) return allocVector(anstype, 0);
     /* Check for fractional recycling (added in 2.14.0) */
-    for (int arg = 0; arg < num_args; arg++) {
-	n = length(args[arg]);
+    for (int arg = 1; arg < num_args; arg++) {
+	n = length(args[arg].value());
 	if (len % n) {
 	    warning(_("an argument will be fractionally recycled"));
 	    break;
@@ -995,13 +994,13 @@ SEXP attribute_hidden do_pmin(/*const*/ Expression* call, const BuiltInFunction*
     case INTSXP:
     {
 	int *r,  *ra = INTEGER(ans), tmp;
-	PROTECT(x = coerceVector(args[0], anstype));
+	PROTECT(x = coerceVector(args[1].value(), anstype));
 	r = INTEGER(x);
 	n = XLENGTH(x);
 	xcopyIntegerWithRecycle(ra, r, 0, len, n);
 	UNPROTECT(1);
-	for (int arg = 1; arg < num_args; arg++) {
-	    x = args[arg];
+	for (int arg = 2; arg < num_args; arg++) {
+	    x = args[arg].value();
 	    PROTECT(x = coerceVector(x, anstype));
 	    n = XLENGTH(x);
 	    r = INTEGER(x);
@@ -1028,13 +1027,13 @@ SEXP attribute_hidden do_pmin(/*const*/ Expression* call, const BuiltInFunction*
     case REALSXP:
     {
 	double *r, *ra = REAL(ans), tmp;
-	PROTECT(x = coerceVector(args[0], anstype));
+	PROTECT(x = coerceVector(args[1].value(), anstype));
 	r = REAL(x);
 	n = XLENGTH(x);
 	xcopyRealWithRecycle(ra, r, 0, len, n);
 	UNPROTECT(1);
-	for (int arg = 1; arg < num_args; arg++) {
-	    x = args[arg];
+	for (int arg = 2; arg < num_args; arg++) {
+	    x = args[arg].value();
 	    PROTECT(x = coerceVector(x, anstype));
 	    n = XLENGTH(x);
 	    r = REAL(x);
@@ -1058,12 +1057,12 @@ SEXP attribute_hidden do_pmin(/*const*/ Expression* call, const BuiltInFunction*
 	break;
     case STRSXP:
     {
-	PROTECT(x = coerceVector(args[0], anstype));
+	PROTECT(x = coerceVector(args[1].value(), anstype));
 	n = XLENGTH(x);
 	xcopyStringWithRecycle(ans, x, 0, len, n);
 	UNPROTECT(1);
-	for (int arg = 1; arg < num_args; arg++) {
-	    x = args[arg];
+	for (int arg = 2; arg < num_args; arg++) {
+	    x = args[arg].value();
 	    SEXP tmp, t2;
 	    PROTECT(x = coerceVector(x, anstype));
 	    n = XLENGTH(x);

@@ -117,16 +117,16 @@ void PrintDefaults(void)
     R_print.cutoff = GetOptionCutoff();
 }
 
-SEXP attribute_hidden do_invisible(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_invisible(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
-    switch (num_args) {
+    switch (args.size()) {
     case 0:
 	return R_NilValue;
     case 1:
 	call->check1arg("x");
-	return args[0];
+	return args[0].value();
     default:
-	op->checkNumArgs(num_args, 1, call);
+	op->checkNumArgs(args.size(), 1, call);
 	return call;/* never used, just for -Wall */
     }
 }
@@ -168,13 +168,13 @@ SEXP attribute_hidden do_prmatrix(/*const*/ Expression* call, const BuiltInFunct
 }/* do_prmatrix */
 
 /* .Internal( print.function(f, useSource, ...)) */
-SEXP attribute_hidden do_printfunction(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_printfunction(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
-    op->checkNumArgs(num_args, call);
-    SEXP s = args[0];
+    op->checkNumArgs(args.size(), call);
+    SEXP s = args[0].value();
     switch (TYPEOF(s)) {
     case CLOSXP:
-	PrintLanguageEtc(s, RHOCONSTRUCT(Rboolean, asLogical(args[1])), /*is closure = */ TRUE);
+	PrintLanguageEtc(s, RHOCONSTRUCT(Rboolean, asLogical(args[1].value())), /*is closure = */ TRUE);
 	printAttributes(s, rho, FALSE);
 	break;
     case BUILTINSXP:
@@ -227,7 +227,7 @@ void PrintLanguage(SEXP s, Rboolean useSource)
 
 /* .Internal(print.default(x, digits, quote, na.print, print.gap,
 			   right, max, useS4)) */
-SEXP attribute_hidden do_printdefault(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_printdefault(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
     SEXP x, naprint;
     int tryS4;
@@ -235,23 +235,21 @@ SEXP attribute_hidden do_printdefault(/*const*/ Expression* call, const BuiltInF
 
     PrintDefaults();
 
-    x = args[0]; args = (args + 1);
+    x = args[0].value();
 
-    if(!isNull(args[0])) {
-	R_print.digits = asInteger(args[0]);
+    if(!isNull(args[1].value())) {
+	R_print.digits = asInteger(args[1].value());
 	if (R_print.digits == NA_INTEGER ||
 	    R_print.digits < R_MIN_DIGITS_OPT ||
 	    R_print.digits > R_MAX_DIGITS_OPT)
 	    error(_("invalid '%s' argument"), "digits");
     }
-    args = (args + 1);
 
-    R_print.quote = asLogical(args[0]);
+    R_print.quote = asLogical(args[2].value());
     if(R_print.quote == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "quote");
-    args = (args + 1);
 
-    naprint = args[0];
+    naprint = args[3].value();
     if(!isNull(naprint))  {
 	if(!isString(naprint) || LENGTH(naprint) < 1)
 	    error(_("invalid 'na.print' specification"));
@@ -259,35 +257,30 @@ SEXP attribute_hidden do_printdefault(/*const*/ Expression* call, const BuiltInF
 	R_print.na_width = R_print.na_width_noquote =
 	    int( strlen(CHAR(R_print.na_string)));
     }
-    args = (args + 1);
 
-    if(!isNull(args[0])) {
-	R_print.gap = asInteger(args[0]);
+    if(!isNull(args[4].value())) {
+	R_print.gap = asInteger(args[4].value());
 	if (R_print.gap == NA_INTEGER || R_print.gap < 0)
 	    error(_("'gap' must be non-negative integer"));
     }
-    args = (args + 1);
 
-    R_print.right = Rprt_adj( asLogical(args[0])); /* Should this be asInteger()? */
+    R_print.right = Rprt_adj( asLogical(args[5].value())); /* Should this be asInteger()? */
     if(R_print.right == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "right");
-    args = (args + 1);
 
-    if(!isNull(args[0])) {
-	R_print.max = asInteger(args[0]);
+    if(!isNull(args[6].value())) {
+	R_print.max = asInteger(args[6].value());
 	if(R_print.max == NA_INTEGER || R_print.max < 0)
 	    error(_("invalid '%s' argument"), "max");
 	else if(R_print.max == INT_MAX) R_print.max--; // so we can add
     }
-    args = (args + 1);
 
-    R_print.useSource = asLogical(args[0]);
+    R_print.useSource = asLogical(args[7].value());
     if(R_print.useSource == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "useSource");
     if(R_print.useSource) R_print.useSource = USESOURCE;
-    args = (args + 1);
 
-    tryS4 = asLogical(args[0]);
+    tryS4 = asLogical(args[8].value());
     if(tryS4 == NA_LOGICAL)
 	error(_("invalid 'tryS4' internal argument"));
 

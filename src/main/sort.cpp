@@ -1317,7 +1317,7 @@ SEXP attribute_hidden do_order(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* FUNCTION: rank(x, length, ties.method) */
-SEXP attribute_hidden do_rank(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_rank(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
     SEXP rank, x;
     int *ik = nullptr /* -Wall */;
@@ -1325,11 +1325,11 @@ SEXP attribute_hidden do_rank(/*const*/ Expression* call, const BuiltInFunction*
     enum {AVERAGE, MAX, MIN} ties_kind = AVERAGE;
     Rboolean isLong = FALSE;
 
-    x = args[0];
+    x = args[0].value();
     if(TYPEOF(x) == RAWSXP)
 	error(_("raw vectors cannot be sorted"));
 #ifdef LONG_VECTOR_SUPPORT
-    SEXP sn = args[1];
+    SEXP sn = args[1].value();
     R_xlen_t n;
     if (TYPEOF(sn) == REALSXP)  {
 	double d = REAL(x)[0];
@@ -1350,7 +1350,7 @@ SEXP attribute_hidden do_rank(/*const*/ Expression* call, const BuiltInFunction*
     if (n == NA_INTEGER || n < 0)
 	error(_("invalid '%s' value"), "length(xx)");
 #endif
-    const char *ties_str = CHAR(asChar(args[2]));
+    const char *ties_str = CHAR(asChar(args[2].value()));
     if(!strcmp(ties_str, "average"))	ties_kind = AVERAGE;
     else if(!strcmp(ties_str, "max"))	ties_kind = MAX;
     else if(!strcmp(ties_str, "min"))	ties_kind = MIN;

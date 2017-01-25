@@ -550,7 +550,7 @@ SEXP nthcdr(SEXP s, int n)
 
 
 /* This is a primitive (with no arguments) */
-SEXP attribute_hidden do_nargs(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_nargs(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
     ClosureContext *cptr = ClosureContext::innermost();
     int nargs = NA_INTEGER;

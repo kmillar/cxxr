@@ -137,16 +137,16 @@ namespace {
 }  // anonymous namespace
 
 /* & | ! */
-SEXP attribute_hidden do_logic(/*const*/ Expression* call, const BuiltInFunction* op, Environment* env, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_logic(/*const*/ Expression* call, const BuiltInFunction* op, Environment* env, const ArgList& args)
 {
     switch (op->variant()) {
     case 1:
     case 2:
-	op->checkNumArgs(num_args, 2, call);
-	return lbinary(op, args[0], args[1]);
+	op->checkNumArgs(args.size(), 2, call);
+	return lbinary(op, args[0].value(), args[1].value());
     case 3:
-	op->checkNumArgs(num_args, 1, call);
-	return lnot(args[0]);
+	op->checkNumArgs(args.size(), 1, call);
+	return lnot(args[0].value());
     default:
 	error(_("internal error in do_logic"));
     }

@@ -934,14 +934,14 @@ done:
     return ans;
 }
 
-SEXP attribute_hidden do_seq_along(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, RObject* const* args, int num_args, const PairList* tags)
+SEXP attribute_hidden do_seq_along(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
     SEXP ans;
 
     static BuiltInFunction* length_op = BuiltInFunction::obtainPrimitive(
 	"length");
     // The arguments have already been evaluated, so call do_length directly.
-    RObject* length = do_length(call, length_op, rho, args, num_args, tags);
+    RObject* length = do_length(call, length_op, rho, args);
     R_xlen_t len = length->sexptype() == INTSXP ?
 	INTEGER(length)[0] : REAL(length)[0];
 

@@ -47,9 +47,7 @@ namespace rho {
   typedef RObject*(quick_builtin)(Expression*,
                                   const BuiltInFunction*,
                                   Environment* env,
-                                  RObject* const* args,
-                                  int num_args,
-                                  const PairList* tags);
+                                  const ArgList& args);
 }  // namespace rho
 
 /* Function Names */
@@ -272,6 +270,7 @@ SEXP do_mget(rho::Expression* call, const rho::BuiltInFunction* op, rho::RObject
 SEXP do_missing(SEXP, SEXP, SEXP, SEXP);  // Special
 SEXP do_names(rho::Expression* call, const rho::BuiltInFunction* op, rho::RObject* x_);
 SEXP do_namesgets(rho::Expression* call, const rho::BuiltInFunction* op, rho::RObject* x_, rho::RObject* value_);
+SEXP do_nargs(rho::Expression* call, const rho::BuiltInFunction* op);
 rho::quick_builtin do_nargs;
 SEXP do_nchar(rho::Expression* call, const rho::BuiltInFunction* op, rho::RObject* x_, rho::RObject* type_, rho::RObject* allowNA_, rho::RObject* keepNA_);
 SEXP do_newenv(rho::Expression* call, const rho::BuiltInFunction* op, rho::RObject* hash_, rho::RObject* parent_, rho::RObject* size_);
