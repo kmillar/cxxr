@@ -214,7 +214,7 @@ namespace rho {
 		    || (m_value && m_value->sexptype() == PROMSXP)) {
 		    return forcedValueSlow();
 		}
-		return std::make_pair(m_value, false);
+		return std::make_pair(m_value.get(), false);
 	    }
 
 	    /** @brief Get pointer to Frame.
