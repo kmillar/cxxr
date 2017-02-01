@@ -85,7 +85,7 @@ void ArgList::transform(Environment* env, Function fun)
 	}
     } else {
 	// We may need to expand out '...'.
-	Vector<Argument> transformed;
+	BaseType transformed;
 	int arg_number = 1;
 	for (Argument& arg : *this) {
 	    if (arg.value() == DotsSymbol) {
@@ -105,7 +105,7 @@ void ArgList::transform(Environment* env, Function fun)
 		arg_number++;
 	    }
 	}
-	static_cast<Vector<Argument>&>(*this) = std::move(transformed);
+	static_cast<BaseType&>(*this) = std::move(transformed);
     }
 }
 

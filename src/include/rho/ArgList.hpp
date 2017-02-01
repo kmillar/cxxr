@@ -59,7 +59,7 @@ namespace rho {
      * call to a FunctionBase object, and provides facilities for
      * manipulating the list in the various ways required
      */
-    class ArgList : public Vector<Argument> {
+    class ArgList : public Vector<Argument, 2> {
     public:
 	/** @brief Way (if any) in which ArgList has been processed.
 	 */
@@ -328,6 +328,8 @@ namespace rho {
 			    const Expression* call = nullptr);
 
     private:
+	typedef Vector<Argument, 2> BaseType;
+
 	Status m_status;
 
 	RObject* evaluateSingleArgument(const RObject* arg,
