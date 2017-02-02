@@ -448,7 +448,7 @@ SEXP classgets(SEXP vec, SEXP klass)
 {
     if (isNull(klass) || isString(klass)) {
 	int ncl = length(klass);
-  	if (ncl <= 0) {
+	if (ncl <= 0) {
 	    vec->setAttribute(static_cast<Symbol*>(R_ClassSymbol), nullptr);
 	    // problems when package building:  UNSET_S4_OBJECT(vec);
 	}
@@ -706,7 +706,7 @@ void InitS3DefaultTypes()
 		break;
 	    case INTSXP:
 	    case REALSXP:
-	        part2 = PROTECT(type2str_nowarn(SEXPTYPE(type)));
+		part2 = PROTECT(type2str_nowarn(SEXPTYPE(type)));
 		part3 = PROTECT(mkChar("numeric"));
 		nprotected += 2;
 		break;
@@ -719,7 +719,7 @@ void InitS3DefaultTypes()
 		nprotected++;
 		break;
 	    default:
-	        part2 = PROTECT(type2str_nowarn(SEXPTYPE(type)));
+		part2 = PROTECT(type2str_nowarn(SEXPTYPE(type)));
 		nprotected++;
 	}
 
@@ -823,10 +823,8 @@ SEXP attribute_hidden do_namesgets(/*const*/ Expression* call, const BuiltInFunc
 	/* else, go ahead, but can't check validity of replacement*/
     }
     if (names != R_NilValue) {
-	GCStackRoot<PairList> tl(new PairList);
-        PROTECT(call = new Expression(nullptr, tl));
-	SETCAR(call, install("as.character"));
-	SETCADR(call, names);
+	PROTECT(call = new Expression(Rf_install("as.character"),
+				      { names }));
 	names = eval(call, R_BaseEnv);
 	UNPROTECT(1);
     }
@@ -1389,13 +1387,13 @@ SEXP attribute_hidden do_slotgets(SEXP call, SEXP op, SEXP args, SEXP env)
     /*  attr@nlist  <-  value  */
     ArgList arglist(SEXP_downcast<PairList*>(args), ArgList::RAW);
     SEXP input;
-    
+
     SEXP nlist = arglist[1].value();
     if (isSymbol(nlist))
 	input = Rf_ScalarString(PRINTNAME(nlist));
     else if(isString(nlist)) {
-        input = length(nlist) == 1
-            ? nlist : Rf_ScalarString(STRING_ELT(nlist, 0));
+	input = length(nlist) == 1
+	    ? nlist : Rf_ScalarString(STRING_ELT(nlist, 0));
     }
     else {
 	error(_("invalid type '%s' for slot name"),
@@ -1403,18 +1401,18 @@ SEXP attribute_hidden do_slotgets(SEXP call, SEXP op, SEXP args, SEXP env)
 	return R_NilValue; /*-Wall*/
     }
     PROTECT(input);
-    
+
     /* replace the second argument with a string */
     arglist[1].setValue(input);
     UNPROTECT(1); // 'input' is now protected
-    
+
     auto disptached = Rf_DispatchOrEval(SEXP_downcast<Expression*>(call),
-                                        SEXP_downcast<BuiltInFunction*>(op),
-                                        &arglist,
-                                        SEXP_downcast<Environment*>(env),
-                                        MissingArgHandling::Keep);
+					SEXP_downcast<BuiltInFunction*>(op),
+					&arglist,
+					SEXP_downcast<Environment*>(env),
+					MissingArgHandling::Keep);
     if (disptached.first)
-        return disptached.second;
+	return disptached.second;
 
     RObject* obj = arglist[0].value();
     RObject* value = arglist[2].value();
@@ -1630,7 +1628,7 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
 	error(_("attempt to set slot on NULL object"));
 #endif
     PROTECT(obj); PROTECT(value);
-                                /* Ensure that name is a symbol */
+				/* Ensure that name is a symbol */
     if(isString(name) && LENGTH(name) == 1)
 	name = installTrChar(STRING_ELT(name, 0));
     if(TYPEOF(name) == CHARSXP)
