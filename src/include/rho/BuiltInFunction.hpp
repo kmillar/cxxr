@@ -375,21 +375,6 @@ namespace rho {
 			       const PairList* args) const
 	{
 	    assert(sexptype() == SPECIALSXP);
-
-	    // Handle internal generic functions.
-	    static BuiltInFunction* length_fn
-		= BuiltInFunction::obtainPrimitive("length");
-	    if (needsDispatch(args)
-		// Specials, the summary group and length handle dispatch
-		// themselves.
-		&& sexptype() == BUILTINSXP
-		&& !isSummaryGroupGeneric()
-		&& this != length_fn)
-	    {
-		ArgList arglist(args, ArgList::RAW);
-		return invoke(call, env, arglist);
-	    }
-
 	    assert(m_function);
 	    return (*m_function)(const_cast<Expression*>(call),
 				 const_cast<BuiltInFunction*>(this),
