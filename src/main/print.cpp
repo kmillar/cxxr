@@ -433,7 +433,7 @@ static void PrintGenericVector(SEXP s, SEXP env)
 	names = getAttrib(s, R_NamesSymbol);
 	taglen = int( strlen(tagbuf));
 	ptag = tagbuf + taglen;
-	newcall = PROTECT(new Expression(Rf_install("print"), { }));
+	newcall = PROTECT(new Expression(Rf_install("print"), { nullptr }));
 
 	if(ns > 0) {
 	    int n_pr = (ns <= R_print.max +1) ? ns : R_print.max;
