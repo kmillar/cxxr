@@ -345,7 +345,7 @@ namespace rho {
 	template<typename... Args>
         RObject* invokeFixedArity(const Expression* call,
 				  Environment* env,
-				  const ArgList& tags,
+				  const PairList* tags,
 				  Args... args) const {
 	    assert(m_fixed_arity_fn);
 	    assert(sizeof...(Args) == arity());
@@ -359,7 +359,7 @@ namespace rho {
 	    {
 		std::initializer_list<RObject*> args_array = { args... };
 		auto dispatched = RealInternalDispatch(
-		    call, args_array.size(), args_array.begin(), tags.tags(),
+		    call, args_array.size(), args_array.begin(), tags,
 		    env);
 		if (dispatched.first)
 		    return dispatched.second;
