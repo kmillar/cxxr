@@ -204,7 +204,7 @@ before_install:
 script:
         - tools/rsync-recommended
         - ulimit -a
-        - ulimit -s 8192
+        - ulimit -s 16384
         - ${CXX_COMPILER} --version
         - CC=${C_COMPILER} CXX=${CXX_COMPILER} ./configure
           --enable-werror
