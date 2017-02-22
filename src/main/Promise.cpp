@@ -55,12 +55,11 @@ PromiseData::PromiseData(const PromiseData& source)
 {}
 
 PromiseData::PromiseData(const RObject* valgen, Environment* env)
-    : m_under_evaluation(false), m_interrupted(false),
-      m_is_pointer_to_promise(false)
+    : m_is_pointer_to_promise(false), m_under_evaluation(false),
+      m_interrupted(false), m_is_evaluated(false)
 {
-    m_value = Symbol::unboundValue();
     m_valgen = valgen;
-    m_environment = env;
+    m_value = env;
 }
 
 PromiseData::PromiseData(Promise* value)
@@ -73,7 +72,6 @@ PromiseData& PromiseData::operator=(const PromiseData& source) {
     m_value = source.asPromise();
     m_is_pointer_to_promise = true;
     m_valgen = nullptr;
-    m_environment = nullptr;
     return *this;
 }
 
@@ -90,7 +88,6 @@ void PromiseData::detachReferents()
 {
     m_value.detach();
     m_valgen.detach();
-    m_environment.detach();
 }
 
 RObject* PromiseData::evaluate()
@@ -98,7 +95,7 @@ RObject* PromiseData::evaluate()
     if (m_is_pointer_to_promise) {
 	return getThis()->evaluate();
     }
-    if (m_value == Symbol::unboundValue()) {
+    if (!m_is_evaluated || m_value == Symbol::unboundValue()) {
 	// Force promise:
 	if (m_interrupted) {
 	    Rf_warning(_("restarting interrupted promise evaluation"));
@@ -114,8 +111,8 @@ RObject* PromiseData::evaluate()
 	    PlainContext cntxt;
 	    RObject* val = Evaluator::evaluate(
 		const_cast<RObject*>(m_valgen.get()),
-		m_environment.get());
-	    setValue(val);
+		getEnvironment());
+	    setEvaluatedValue(val);
 	}
 	catch (...) {
 	    m_interrupted = true;
@@ -124,7 +121,7 @@ RObject* PromiseData::evaluate()
 	m_under_evaluation = false;
     }
     assert(!m_is_pointer_to_promise);
-    return m_value;
+    return getValue();
 }
 
 bool PromiseData::isMissingSymbol() const
@@ -138,7 +135,7 @@ bool PromiseData::isMissingSymbol() const
     if (m_value == Symbol::missingArgument())
 	return true;
     */
-    if (m_value == Symbol::unboundValue() && m_valgen) {
+    if ((!m_is_evaluated || m_value == Symbol::unboundValue()) && m_valgen) {
 	const RObject* prexpr = m_valgen;
 	if (prexpr->sexptype() == SYMSXP) {
 	    // According to Luke Tierney's comment to R_isMissing() in CR,
@@ -150,8 +147,7 @@ bool PromiseData::isMissingSymbol() const
 		const Symbol* promsym
 		    = static_cast<const Symbol*>(prexpr);
 		m_under_evaluation = true;
-		ans = isMissingArgument(promsym, m_environment->frame());
-
+		ans = isMissingArgument(promsym, getEnvironment()->frame());
 	    }
 	    catch (...) {
 		m_under_evaluation = false;
@@ -164,13 +160,22 @@ bool PromiseData::isMissingSymbol() const
     return ans;
 }
 
-void PromiseData::setValue(RObject* val)
+void PromiseData::setEvaluatedValue(RObject* val)
 {
     assert(!m_is_pointer_to_promise);
+    if (val == Symbol::unboundValue()) {
+	return;
+    }
     m_value = val;
+    m_is_evaluated = true;
     SET_NAMED(val, 2);
-    if (val != Symbol::unboundValue())
-	m_environment = nullptr;
+}
+
+Environment* PromiseData::getEnvironment() const {
+    assert(!m_is_pointer_to_promise);
+    if (m_is_evaluated)
+	return nullptr;
+    return SEXP_downcast<Environment*>(m_value.get());
 }
 
 const char* Promise::typeName() const
@@ -179,20 +184,17 @@ const char* Promise::typeName() const
 }
 
 Environment* Promise::environment_full() const {
-    return m_data.m_environment;
+    return m_data.getEnvironment();
 }
 
 void PromiseData::visitReferents(GCNode::const_visitor* v) const
 {
     const GCNode* value = m_value;
     const GCNode* valgen = m_valgen;
-    const GCNode* env = m_environment;
     if (value)
 	(*v)(value);
     if (valgen)
 	(*v)(valgen);
-    if (env)
-	(*v)(env);
 }
 
 // ***** C interface *****
@@ -213,14 +215,14 @@ SEXP R_mkEVPROMISE(SEXP expr, SEXP value)
 void SET_PRVALUE(SEXP x, SEXP v)
 {
     Promise* prom = SEXP_downcast<Promise*>(x);
-    prom->setValue(v);
+    prom->setEvaluatedValue(v);
 }
 
 int PRSEEN(SEXP x) {
     Promise* prom = SEXP_downcast<Promise*>(x);
     return prom->m_data.m_under_evaluation
 	|| prom->m_data.m_interrupted
-	|| prom->m_data.m_environment == R_NilValue;
+	|| prom->m_data.m_is_evaluated;
 }
 
 SEXP PRENV(SEXP x) {

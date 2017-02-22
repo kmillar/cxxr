@@ -32,7 +32,6 @@
 #define RPROMISE_H
 
 #include "rho/RObject.hpp"
-#include "rho/RObject.hpp"
 #include "rho/Symbol.hpp"
 
 extern "C"
@@ -81,6 +80,7 @@ namespace rho {
 						  RObject* evaluated_value) {
 	    PromiseData result(expression, nullptr);
 	    result.m_value = evaluated_value;
+	    result.m_is_evaluated = true;
 	    return result;
 	}
 
@@ -108,7 +108,7 @@ namespace rho {
 
 	//* @brief Has this promise been evaluated yet?
 	bool evaluated() const {
-	    return !(getThis()->m_environment);
+	    return getThis()->m_is_evaluated;
 	}
 
 	/** @brief Not for general use.
@@ -130,15 +130,17 @@ namespace rho {
 	// prefered where possible.  Once a promise has been evaluated, the
 	// PromiseData object may switch back to the first representation.
 
-	// To save space, m_value is overloaded.  In the first representation,
-	// it stores the evaluated value of the promise.  In the second, it
-	// stores the pointer to the Promise.
+	// To save space, m_value is overloaded.  There are three possibilities:
+	//  - pointer to a Promise object.
+	//  - pointer to the Environment to evaluate the un-evaluated promise in.
+	//  - the value of the evaluated promise.
 	GCEdge<> m_value;
-	GCEdge<const RObject> m_valgen;
-	GCEdge<Environment> m_environment;
+	GCEdge<const RObject> m_valgen;  // Set only if !m_is_pointer_to_promise.
+	bool m_is_pointer_to_promise;
+	// The following three fields are set only if !m_is_pointer_to_promise.
 	mutable bool m_under_evaluation;
 	mutable bool m_interrupted;
-	bool m_is_pointer_to_promise;
+	bool m_is_evaluated;
 
 	/** @brief Set value of the Promise.
 	 *
@@ -148,7 +150,16 @@ namespace rho {
 	 *
 	 * @param val Value to be associated with the Promise.
 	 */
-	void setValue(RObject* val);
+	void setEvaluatedValue(RObject* val);
+
+	RObject* getValue() const {
+	    assert(!m_is_pointer_to_promise);
+	    if (!m_is_evaluated) {
+		return Symbol::unboundValue();
+	    }
+	    return m_value;
+	}
+	Environment* getEnvironment() const;
 
 	PromiseData* getThis();
 	const PromiseData* getThis() const;
@@ -276,7 +287,7 @@ namespace rho {
 	 * evaluated.
 	 */
 	Environment* environment() const {
-	    if (!m_data.m_environment)
+	    if (m_data.evaluated())
 		return nullptr;
 	    return environment_full();
 	}
@@ -289,7 +300,7 @@ namespace rho {
 	 * Symbol::unboundValue() if it has not yet been evaluated.
 	 */
 	RObject* value() {
-	    return m_data.m_value;
+	    return m_data.getValue();
 	}
 
 	/** @brief RObject to be evaluated by the Promise.
@@ -309,8 +320,8 @@ namespace rho {
 	 *
 	 * @param val Value to be associated with the Promise.
 	 */
-	void setValue(RObject* val) {
-	    m_data.setValue(val);
+	void setEvaluatedValue(RObject* val) {
+	    m_data.setEvaluatedValue(val);
 	}
 
 	friend void ::SET_PRVALUE(SEXP x, SEXP v);  // Needs setValue().
