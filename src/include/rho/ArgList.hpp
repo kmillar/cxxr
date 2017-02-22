@@ -63,7 +63,7 @@ namespace rho {
     public:
 	/** @brief Way (if any) in which ArgList has been processed.
 	 */
-	enum Status {
+	enum Status: char {
 	    RAW,       /**< Unprocessed. */
 	    PROMISED,  /**< Argument values are wrapped in Promise
 			* objects, and non-null tags have been coerced

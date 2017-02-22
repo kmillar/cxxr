@@ -93,8 +93,8 @@ class Vector {
 
     // This assumes POD data.  That seems broken.
     Vector(Vector&& other)
-        : m_size(other.m_size), m_is_small(other.m_is_small),
-          m_data(other.m_data)
+        : m_data(other.m_data), m_size(other.m_size),
+          m_is_small(other.m_is_small)
     {
         other.m_size = 0;
         other.m_is_small = true;
@@ -362,9 +362,6 @@ class Vector {
     }
 
   private:
-    size_t m_size : 48;
-    bool m_is_small : 1;
-
     typedef GCEdge<VariableLengthArray<T>> PointerType;
 
     // We use a small-size optimization.  For small vectors, we store the data
@@ -377,6 +374,9 @@ class Vector {
                       "FIXME: sizeof(value_type) not a multiple of alignof(value_type) isn't supported yet.");
         alignas(value_type) char m_storage[sizeof(value_type) * N];
     } m_data;
+
+    size_t m_size : 48;
+    bool m_is_small : 1;
 
     void setSize(size_type size) noexcept {
         m_size = size;
