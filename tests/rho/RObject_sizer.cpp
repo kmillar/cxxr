@@ -33,17 +33,18 @@ int main() {
 	 << "\nsizeof(GCNode): " << sizeof(GCNode)
 	 << "\nsizeof(RObject): " << sizeof(RObject)
 	 << "\nsizeof(ConsCell): " << sizeof(ConsCell)
-         << "\nsizeof(PairList): " << sizeof(PairList)
-         << "\nsizeof(Symbol): " << sizeof(Symbol)
+	 << "\nsizeof(PairList): " << sizeof(PairList)
+	 << "\nsizeof(Symbol): " << sizeof(Symbol)
 	 << "\nsizeof(VectorBase): " << sizeof(VectorBase)
 	 << "\nsizeof(IntVector): " << sizeof(IntVector)
 	 << "\nsizeof(RealVector): " << sizeof(RealVector)
 	 << "\nsizeof(Expression): " << sizeof(Expression)
+	 << "\nsizeof(PromiseData): " << sizeof(PromiseData)
+	 << "\nsizeof(Promise): " << sizeof(Promise)
+	 << "\nsizeof(Argument): " << sizeof(Argument)
+	 << "\nsizeof(ArgList): " << sizeof(ArgList)
 	 << "\nsizeof(Frame::Binding): " << sizeof(Frame::Binding)
 	 << "\nsizeof(Frame): " << sizeof(Frame)
 	 << "\nsizeof(Environment): " << sizeof(Environment) << '\n';
     return 0;
 }
-
-
-    
