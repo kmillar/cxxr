@@ -975,7 +975,7 @@ namespace rho {
 	mutable bool m_write_monitored : 1;
 
         // The default arguments that were added by the argument matching.
-        Vector<PromiseData> m_default_arglist;
+	Vector<PromiseData, 2> m_default_arglist;
 
         friend class ArgMatcher;
         friend class ArgMatchCache;
