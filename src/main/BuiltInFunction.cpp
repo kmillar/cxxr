@@ -257,23 +257,6 @@ RObject* BuiltInFunction::callBuiltInWithCApi(CCODE builtin,
                     env);
 }
 
-std::pair<bool, RObject*>
-BuiltInFunction::InternalDispatch(const Expression* call,
-				  Environment* env,
-				  const ArgList& args) const
-{
-    assert(m_dispatch_type != DispatchType::NONE);
-    assert(args.status() == ArgList::EVALUATED);
-
-    size_t num_args = args.size();
-    RObject** args_array = static_cast<RObject**>(
-	alloca(num_args * sizeof(RObject*)));
-    for (int i = 0; i < num_args; i++) {
-	args_array[i] = args[i].value();
-    }
-    return InternalDispatch(call, env, num_args, args_array, args.tags());
-}
-
 const char* BuiltInFunction::GetInternalGroupDispatchName() const
 {
     switch(m_dispatch_type) {
@@ -293,18 +276,14 @@ const char* BuiltInFunction::GetInternalGroupDispatchName() const
 
 std::pair<bool, RObject*>
 BuiltInFunction::RealInternalDispatch(const Expression* call,
-				      int num_args,
-				      RObject* const* evaluated_args,
-				      const PairList* tags,
-				      Environment* env) const
+				      Environment* env,
+				      ArgList&& arglist) const
 {
-    PairList* pargs = PairList::make(num_args, evaluated_args);
-    pargs->copyTagsFrom(tags);
-    ArgList arglist(pargs, ArgList::EVALUATED);
+    assert(arglist.status() == ArgList::EVALUATED);
 
     switch(m_dispatch_type) {
     case DispatchType::INTERNAL:
-      return Rf_Dispatch(call, this, arglist, env);
+	return Rf_Dispatch(call, this, std::move(arglist), env);
     case DispatchType::GROUP_MATH:
     case DispatchType::GROUP_OPS:
     case DispatchType::GROUP_COMPLEX:

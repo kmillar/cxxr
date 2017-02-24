@@ -322,7 +322,8 @@ SEXP attribute_hidden do_drop(/*const*/ Expression* call, const BuiltInFunction*
 
 SEXP attribute_hidden do_length(/*const*/ Expression* call, const BuiltInFunction* op, Environment* rho, const ArgList& args)
 {
-    auto dispatched = op->InternalDispatch(call, rho, args);
+    ArgList args_copy(args);
+    auto dispatched = op->InternalDispatch(call, rho, std::move(args_copy));
     if (dispatched.first) {
 	RObject* ans = dispatched.second;
 	if (length(ans) == 1 && TYPEOF(ans) == REALSXP) {
@@ -357,7 +358,7 @@ R_xlen_t attribute_hidden dispatch_xlength(RObject* x,
     if (isObject(x))
     {
 	auto dispatched = length_op->InternalDispatch(
-	    length_call, rho, 1, &x, length_call->getArgs());
+	    length_call, rho, ArgList({ x }, ArgList::EVALUATED));
 	if (dispatched.first) {
 	    RObject* len = dispatched.second;
 	    return (R_xlen_t)

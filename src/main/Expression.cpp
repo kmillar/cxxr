@@ -220,7 +220,7 @@ RObject* Expression::evaluateBuiltInCall(const BuiltInFunction* builtin,
 	if (needs_evaluation)
 	    arglist.evaluate(env);
 	prepareToInvokeBuiltIn(builtin);
-	return builtin->invoke(this, env, arglist);
+	return builtin->invoke(this, env, std::move(arglist));
     }
 
     assert(builtin->sexptype() == SPECIALSXP);
