@@ -304,7 +304,7 @@ namespace rho {
         }
 
 	bool hasFixedArityCall() const {
-	    return m_fixed_arity_fn;
+	    return m_fixed_arity_fn || m_varargs_function;
 	}
 
 	RObject* invoke(const Expression* call, Environment* env,
@@ -354,13 +354,18 @@ namespace rho {
 	template<typename... Args>
 	RObject* invokeFixedArityWithoutDispatch(const Expression* call,
 						 Args... args) const {
-	    assert(m_fixed_arity_fn);
+	    if (m_fixed_arity_fn) {
 	    assert(sizeof...(Args) == arity());
 
 	    auto fn = reinterpret_cast<
 		RObject*(*)(Expression*, const BuiltInFunction*,
 			    Args...)>(m_fixed_arity_fn);
 	    return (*fn)(const_cast<Expression*>(call), this, args...);
+	    } else {
+		assert(m_varargs_function);
+		return (*m_varargs_function)(const_cast<Expression*>(call),
+					     this, sizeof...(Args), args...);
+	    }
 	}
 
 	RObject* invokeSpecial(const Expression* call, Environment* env,
@@ -446,6 +451,11 @@ namespace rho {
 	typedef RObject* (*FixedArityFnStorage)(Expression*,
 						const BuiltInFunction*,
 						class SequenceOfRObject*);
+	// Function that takes a variable number of arguments.
+	typedef RObject* (*VarArgsFunction)(Expression*,
+					    const BuiltInFunction*,
+					    int num_args,
+					    ...);
 
 	// 'Pretty-print' information:
 	struct PPinfo {
@@ -488,6 +498,15 @@ namespace rho {
 	};
 
 	BuiltInFunction(const char* name,
+			VarArgsFunction function,
+			unsigned int variant,
+			unsigned int flags,
+			int arity,
+			PPinfo ppinfo,
+			const char* first_arg_name = nullptr,
+			DispatchType dispatch = DispatchType::NONE);
+
+	BuiltInFunction(const char* name,
 			FixedArityFnStorage cfun,
 			unsigned int variant,
 			unsigned int flags,
@@ -519,8 +538,8 @@ namespace rho {
 	unsigned int m_offset;
 	CCODE m_function;
         QuickInvokeFunction m_quick_function;
-
 	FixedArityFnStorage m_fixed_arity_fn;
+	VarArgsFunction m_varargs_function;
 
 	std::string m_name;  // name of function
 	unsigned int m_variant;  // used to select alternative

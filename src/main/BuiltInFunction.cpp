@@ -91,8 +91,6 @@ BuiltInFunction::BuiltInFunction(const char* name,
 		      first_arg_name, dispatch)
 {
     m_function = cfun;
-    m_quick_function = nullptr;
-    m_fixed_arity_fn = nullptr;
 
     if (m_function == do_External
 	|| m_function == do_Externalgr
@@ -123,9 +121,7 @@ BuiltInFunction::BuiltInFunction(const char* name,
     : BuiltInFunction(name, variant, flags, arity, ppinfo,
 		      first_arg_name, dispatch)
 {
-    m_function = nullptr;
     m_quick_function = fun;
-    m_fixed_arity_fn = nullptr;
 }
 
 BuiltInFunction::BuiltInFunction(const char* name,
@@ -139,12 +135,23 @@ BuiltInFunction::BuiltInFunction(const char* name,
     : BuiltInFunction(name, variant, flags, arity, ppinfo,
 		      first_arg_name, dispatch)
 {
-    m_function = nullptr;
-    m_quick_function = nullptr;
     m_fixed_arity_fn = cfun;
 
     if (m_fixed_arity_fn == reinterpret_cast<FixedArityFnStorage>(do_paren))
 	m_transparent = true;
+}
+
+BuiltInFunction::BuiltInFunction(const char* name,
+				 VarArgsFunction function,
+				 unsigned int variant,
+				 unsigned int flags,
+				 int arity,
+				 PPinfo ppinfo,
+				 const char* first_arg_name,
+				 DispatchType dispatch)
+    : BuiltInFunction(name, variant, flags, arity, ppinfo,
+		      first_arg_name, dispatch) {
+    m_varargs_function = function;
 }
 
 BuiltInFunction::BuiltInFunction(const char* name,
@@ -165,6 +172,10 @@ BuiltInFunction::BuiltInFunction(const char* name,
     m_transparent = (viaDotInternal()
 		     || (m_name.length() > 2
 		     	 && m_name.substr(m_name.length() - 2) == "<-"));
+    m_function = nullptr;
+    m_quick_function = nullptr;
+    m_fixed_arity_fn = nullptr;
+    m_varargs_function = nullptr;
 }
 
 BuiltInFunction::~BuiltInFunction()
