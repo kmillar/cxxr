@@ -210,12 +210,12 @@ RObject* Expression::evaluateBuiltInCall(const BuiltInFunction* builtin,
 	check1arg(first_arg_name);
     }
 
-    if (builtin->hasFixedArityCall()) {
-	return invokeFixedArityBuiltIn(builtin, env, args, num_args,
+    if (builtin->usesNativeCall()) {
+	return invokeNativeCallBuiltIn(builtin, env, args, num_args,
 				       needs_evaluation);
     }
 
-    if (builtin->hasDirectCall() || builtin->sexptype() == BUILTINSXP) {
+    if (builtin->usesArgListCall() || builtin->sexptype() == BUILTINSXP) {
 	ArgList arglist(args, status);
 	if (needs_evaluation)
 	    arglist.evaluate(env);
@@ -263,13 +263,13 @@ struct InvokeWithExpandedArgs<0> {
 			   ExpandedArgs... expanded_args) {
 	assert(unexpanded_args == nullptr);
     prepareToInvokeBuiltIn(func);
-	return func->invokeFixedArity(call, env, tags, expanded_args...);
+	return func->invokeNative(call, env, tags, expanded_args...);
 }
 };
 
 }
 
-RObject* Expression::invokeFixedArityBuiltIn(const BuiltInFunction* func,
+RObject* Expression::invokeNativeCallBuiltIn(const BuiltInFunction* func,
 					       Environment* env,
 					     const PairList* args, int num_args,
 					     bool needs_evaluation) const

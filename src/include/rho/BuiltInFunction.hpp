@@ -299,11 +299,15 @@ namespace rho {
 	// Virtual function of RObject:
 	const char* typeName() const override;
 
-        bool hasDirectCall() const {
-            return m_quick_function;
+	bool usesPairListCall() const {
+	    return m_pairlist_function;
         }
 
-	bool hasFixedArityCall() const {
+	bool usesArgListCall() const {
+	    return m_arglist_function;
+	}
+
+	bool usesNativeCall() const {
 	    return m_fixed_arity_fn || m_varargs_function;
 	}
 
@@ -326,17 +330,18 @@ namespace rho {
 	RObject* invokeWithoutDispatch(const Expression* call, Environment* env,
 				       const ArgList& args) const
 	{
-	    if (m_function)
-            return callBuiltInWithCApi(m_function, call, this, args, env);
+	    if (m_pairlist_function)
+		return callBuiltInWithCApi(m_pairlist_function, call, this,
+					   args, env);
 	    else {
-            assert(m_quick_function);
-            return m_quick_function(const_cast<Expression*>(call),
+		assert(m_arglist_function);
+		return m_arglist_function(const_cast<Expression*>(call),
 					this, env, args);
 	    }
         }
 
 	template<typename... Args>
-        RObject* invokeFixedArity(const Expression* call,
+	RObject* invokeNative(const Expression* call,
 				  Environment* env,
 				  const PairList* tags,
 				  Args... args) const {
@@ -348,11 +353,11 @@ namespace rho {
 		if (dispatched.first)
 		    return dispatched.second;
 	    }
-	    return invokeFixedArityWithoutDispatch(call, args...);
+	    return invokeNativeWithoutDispatch(call, args...);
 	}
 
 	template<typename... Args>
-	RObject* invokeFixedArityWithoutDispatch(const Expression* call,
+	RObject* invokeNativeWithoutDispatch(const Expression* call,
 						 Args... args) const {
 	    if (m_fixed_arity_fn) {
 	    assert(sizeof...(Args) == arity());
@@ -372,9 +377,9 @@ namespace rho {
 			       const PairList* args) const
 	{
 	    assert(sexptype() == SPECIALSXP);
-	    assert(m_function);
+	    assert(m_pairlist_function);
 	    assert(!functionNeedsInternalDispatch());
-	    return (*m_function)(const_cast<Expression*>(call),
+	    return (*m_pairlist_function)(const_cast<Expression*>(call),
 				 const_cast<BuiltInFunction*>(this),
 				 const_cast<PairList*>(args),
 				 env);
@@ -438,9 +443,11 @@ namespace rho {
     private:
 	const char* GetInternalGroupDispatchName() const;
 
+	typedef CCODE PairListFunction;
+
 	// Alternative C function.  This differs from CCODE primarily in
 	// that the arguments are passed in a Vector instead of a PairList.
-        typedef RObject*(*QuickInvokeFunction)(/*const*/ Expression* call,
+	typedef RObject*(*ArgListFunction)(/*const*/ Expression* call,
 					       const BuiltInFunction* op,
 					       Environment* env,
 					       const ArgList& arg);
@@ -465,7 +472,7 @@ namespace rho {
 	};
 
 	BuiltInFunction(const char*,
-			CCODE,
+			PairListFunction,
 			unsigned int,
 			unsigned int,
 			int,
@@ -473,7 +480,7 @@ namespace rho {
 			const char* first_arg_name = nullptr,
 			DispatchType dispatch = DispatchType::NONE);
 	BuiltInFunction(const char*,
-			QuickInvokeFunction,
+			ArgListFunction,
 			unsigned int,
 			unsigned int,
 			int,
@@ -536,8 +543,8 @@ namespace rho {
         static map* getInternalFunctionLookupTable();
 
 	unsigned int m_offset;
-	CCODE m_function;
-        QuickInvokeFunction m_quick_function;
+	PairListFunction m_pairlist_function;
+	ArgListFunction m_arglist_function;
 	FixedArityFnStorage m_fixed_arity_fn;
 	VarArgsFunction m_varargs_function;
 

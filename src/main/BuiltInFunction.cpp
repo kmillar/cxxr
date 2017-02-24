@@ -80,7 +80,7 @@ unsigned int BuiltInFunction::s_next_offset = 0;
 // specifically be attributed to the 'syntactical' function.
 
 BuiltInFunction::BuiltInFunction(const char* name,
-				 CCODE cfun,
+				 PairListFunction function,
 				 unsigned int variant,
 				 unsigned int flags,
 				 int arity,
@@ -90,28 +90,28 @@ BuiltInFunction::BuiltInFunction(const char* name,
     : BuiltInFunction(name, variant, flags, arity, ppinfo,
 		      first_arg_name, dispatch)
 {
-    m_function = cfun;
+    m_pairlist_function = function;
 
-    if (m_function == do_External
-	|| m_function == do_Externalgr
-	|| m_function == do_begin
-	|| m_function == do_break
-	|| m_function == do_dotcall
-	|| m_function == do_for
-	|| m_function == do_if
-	|| m_function == do_internal
-	|| m_function == do_repeat
-	|| m_function == do_return
-	|| m_function == do_while) {
+    if (function == do_External
+	|| function == do_Externalgr
+	|| function == do_begin
+	|| function == do_break
+	|| function == do_dotcall
+	|| function == do_for
+	|| function == do_if
+	|| function == do_internal
+	|| function == do_repeat
+	|| function == do_return
+	|| function == do_while) {
 	m_transparent = true;
     }
-    if (m_function == do_set) {
+    if (function == do_set) {
 	m_transparent = false;
     }
 }
 
 BuiltInFunction::BuiltInFunction(const char* name,
-				 QuickInvokeFunction fun,
+				 ArgListFunction function,
 				 unsigned int variant,
 				 unsigned int flags,
 				 int arity,
@@ -121,7 +121,7 @@ BuiltInFunction::BuiltInFunction(const char* name,
     : BuiltInFunction(name, variant, flags, arity, ppinfo,
 		      first_arg_name, dispatch)
 {
-    m_quick_function = fun;
+    m_arglist_function = function;
 }
 
 BuiltInFunction::BuiltInFunction(const char* name,
@@ -172,8 +172,8 @@ BuiltInFunction::BuiltInFunction(const char* name,
     m_transparent = (viaDotInternal()
 		     || (m_name.length() > 2
 		     	 && m_name.substr(m_name.length() - 2) == "<-"));
-    m_function = nullptr;
-    m_quick_function = nullptr;
+    m_pairlist_function = nullptr;
+    m_arglist_function = nullptr;
     m_fixed_arity_fn = nullptr;
     m_varargs_function = nullptr;
 }

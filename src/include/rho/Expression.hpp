@@ -151,7 +151,7 @@ namespace rho {
 				     const PairList* args,
 				     ArgList::Status status) const;
 
-	RObject* invokeFixedArityBuiltIn(const BuiltInFunction* builtin,
+	RObject* invokeNativeCallBuiltIn(const BuiltInFunction* builtin,
 			      Environment* env,
 					 const PairList* args, int num_args,
 					 bool needs_evaluation) const;
