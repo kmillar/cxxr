@@ -37,7 +37,9 @@
 
 #ifdef __cplusplus
 
+#include <stdarg.h>
 #include <boost/preprocessor.hpp>
+
 #include "rho/BuiltInFunction.hpp"
 #include "rho/RObject.hpp"
 #include "rho/Expression.hpp"
